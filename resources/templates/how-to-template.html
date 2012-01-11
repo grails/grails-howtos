@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>How To: ${title?.encodeAsHtml()}</title>
+</head>
+<body>
+    <h3>Table of Contents</h3>
+    <ol>
+    <% for (entry in toc) { %>
+        <li><a href="#${entry.key.encodeAsUrlFragment()}">${entry.value?.encodeAsHtml()}</a></li>
+    <% } %>
+    </ol>
+
+    ${content}
+</body>
+</html>

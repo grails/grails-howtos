@@ -1,0 +1,35 @@
+apply plugin: "base"
+
+version = 1.0
+
+archivesBaseName = "grails-howtos"
+
+outputDir = "${buildDir.path}/docs"
+
+tasks.addRule("Pattern: publishGuide_<lang>") { String taskName ->
+    def m = taskName =~ /publishGuide_(\w+)/
+    if (m) {
+        def lang = m[0][1]
+        task(taskName, type: grails.doc.gradle.PublishHowToTask) {
+            language = lang
+        }
+    }
+}
+
+for (f in new File(projectDir, "src").listFiles()) {
+    if (f.directory && !(f.name in ["en", "guide", "ref"])) {
+        docs.dependsOn << "publishPdf_${f.name}"
+    }
+}
+
+task dist(type: Zip, dependsOn: 'docs') {
+    from outputDir
+}
+
+artifacts {
+    archives dist
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.0-milestone-7'
+}

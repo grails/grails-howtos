@@ -1,0 +1,10 @@
+apply plugin: "groovy"
+
+repositories {
+    mavenCentral()
+    mavenRepo url: "http://repo.grails.org/grails/libs-releases-local"
+}
+
+dependencies {
+    compile "org.grails:grails-docs:2.0.0"
+}
