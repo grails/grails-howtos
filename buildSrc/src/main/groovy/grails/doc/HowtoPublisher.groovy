@@ -136,7 +136,7 @@ class HowToPublisher {
         }
 
         context = new BaseInitialRenderContext()
-        engine = new DocEngine(context)
+        engine = new HowToDocEngine(context)
         context.renderEngine = engine
 
         // Add any custom macros registered with this publisher to the engine.
