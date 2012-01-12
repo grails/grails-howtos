@@ -6,8 +6,8 @@ archivesBaseName = "grails-howtos"
 
 outputDir = "${buildDir.path}/docs"
 
-tasks.addRule("Pattern: publishGuide_<lang>") { String taskName ->
-    def m = taskName =~ /publishGuide_(\w+)/
+tasks.addRule("Pattern: publish_<lang>") { String taskName ->
+    def m = taskName =~ /publish_(\w+)/
     if (m) {
         def lang = m[0][1]
         task(taskName, type: grails.doc.gradle.PublishHowToTask) {
@@ -16,11 +16,9 @@ tasks.addRule("Pattern: publishGuide_<lang>") { String taskName ->
     }
 }
 
-for (f in new File(projectDir, "src").listFiles()) {
-    if (f.directory && !(f.name in ["en", "guide", "ref"])) {
-        docs.dependsOn << "publishPdf_${f.name}"
-    }
-}
+def langDirs = new File(projectDir, "src").listFiles({ f -> f.directory} as FileFilter)
+
+task docs(dependsOn: langDirs.collect { "publish_${it.name}" })
 
 task dist(type: Zip, dependsOn: 'docs') {
     from outputDir
