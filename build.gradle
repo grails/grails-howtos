@@ -4,7 +4,8 @@ version = 1.0
 
 archivesBaseName = "grails-howtos"
 
-outputDir = "${buildDir.path}/docs"
+outputDir = new File(buildDir, "docs")
+gitDir = new File(buildDir, "wd")
 
 tasks.addRule("Pattern: publish_<lang>") { String taskName ->
     def m = taskName =~ /publish_(\w+)/
@@ -23,6 +24,35 @@ task docs(dependsOn: langDirs.collect { "publish_${it.name}" })
 task dist(type: Zip, dependsOn: 'docs') {
     from outputDir
 }
+
+task cloneGhPages(type: grails.doc.gradle.GitCloneTask) {
+    uri = "https://pledbrook@github.com/pledbrook/grails-howtos.git"
+    branch = "gh-pages"
+    cloneAllBranches = true
+    destination = gitDir
+}
+cloneGhPages.doFirst { assert gitDir.deleteDir() }
+
+task copyHtml(type: Copy) {
+    from outputDir
+    into gitDir
+}
+
+task gitAddFiles(type: grails.doc.gradle.GitAddTask) {
+    repository = gitDir
+    paths = ["."]
+}
+
+task gitCommit(type: grails.doc.gradle.GitCommitTask) {
+    repository = gitDir
+    message = "Automated publication of the HOWTO guides."
+}
+
+task gitPush(type: grails.doc.gradle.GitPushTask) {
+    repository = gitDir
+}
+
+task deploy(dependsOn: [docs, cloneGhPages, copyHtml, gitAddFiles, gitCommit, gitPush])
 
 artifacts {
     archives dist
