@@ -37,6 +37,9 @@ class GitPushTask extends DefaultTask {
     @TaskAction
     def clone() {
         def cmd = Git.open(repository).push()
+        cmd.credentialsProvider = new UsernamePasswordCredentialsProvider(
+                project.getProperty("github.username"),
+                project.getProperty("github.password"))
         cmd.remote = remote ?: "origin"
 //        cmd.refSpecs = 
         cmd.call()
