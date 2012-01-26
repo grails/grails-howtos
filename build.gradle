@@ -35,6 +35,7 @@ cloneGhPages.doFirst { assert gitDir.deleteDir() }
 
 task copyHtml(type: Copy) {
     from outputDir
+    from file("resources/index.html")
     into gitDir
 }
 
