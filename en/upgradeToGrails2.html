@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" type="text/css" href="../css/main.css" />
+        <script type="text/javascript" src="../js/jquery-1.7.1.min.js"></script>
+        <!--[if !IE]>-->
+        <style type="text/css">
+        body {
+            font-size:16px;
+        }
+        </style>
+        <!--<[endif]-->
+        <title>How To: Upgrade to Grails 2</title>
+    </head>
+    <body>
+        <div id="header-container">
+            <div id="header">
+                <a href="http://grails.org"><img src="../img/grails.png" alt="GRAILS HOW-TOs" /></a>
+                <a id="all_links_toggler">Browse all How-Tos</a>
+                <div id="all_links">
+                    <a href="gettingStarted.html">Getting Started</a>
+                    <a href="upgradeToGrails2.html">Upgrade to Grails 2</a>
+                </div>
+            </div>
+        </div>
+        <div id="main-container">
+            <div id="toc">
+                <h3>Sections</h3>
+                <ol>
+                
+                    <li><a href="#s1">First steps</a></li>
+                
+                    <li><a href="#s2">Persistence</a></li>
+                
+                    <li><a href="#s3">The web layer</a></li>
+                
+                    <li><a href="#s4">Testing</a></li>
+                
+                    <li><a href="#s5">Plugins</a></li>
+                
+                </ol>
+            </div>
+
+            <div id="content"><h1>Upgrade to Grails 2</h1><p class="paragraph"/>There are always some breaking changes with any major version change of a framework. This document will navigate you through the changes you may need to make in order to get an existing 1.3.x application working with Grails 2.0. Some changes will apply to all projects. Others only affect a few projects. The complexity of upgrading an existing application also depends on what plugins are installed, so any plugins that are known to work with Grails 2 are included at the end.<p class="paragraph"/><h2 id="s1">First steps</h2><p class="paragraph"/>The very first thing you should do is delete the project's 'target' directory, and if your project working directory isn't specific to a version of Grails, delete that too (it's under a <code>&#60;grailsVersion&#62;</code> path by default). Then, with Grails 2 execute:<p class="paragraph"/><pre class="bq"><code>
+grails upgrade --force</code></pre><p class="paragraph"/>This will ensure you have the latest versions of the JSP taglib definition files and, most importantly, the latest applicationContext.xml.<p class="paragraph"/>The <code>web.xml</code> file has also changed, but this only affects projects that have a template <code>web.xml</code> in the 'src/templates' directory. If that's the case, work out what changes were made to it, re-run <code>grails install-templates</code>, and then apply the changes to the new web descriptor.<p class="paragraph"/>If you want to use the new interactive console extensively (and why wouldn't you?) then be prepared to up the heap and permgen space for your application:<p class="paragraph"/><pre class="bq"><code>
+export GRAILS_OPTS="-Xmx700m -XX:MaxPermSize=384m"</code></pre><p class="paragraph"/>for example. To fine tune these numbers, you can run something like the JDK jconsole command to see how much memory your application is using when running the interactive console.<p class="paragraph"/><h2 id="s2">Persistence</h2><p class="paragraph"/>The persistence layer has seen a lot of change over the last year or two, not least because GORM is now available for multiple data stores, not just SQL via Hibernate. Still, most domain models won't have to change much if at all.<p class="paragraph"/><h3>New in-memory database</h3><p class="paragraph"/>Many projects probably use the default HSQLDB database for development. Grails 2 has switched to H2 as the default instead, and so if you try to run your application you'll see this warning:<p class="paragraph"/><pre class="bq"><code>
+Database driver org.hsqldb.jdbcDriver for HSQLDB not found. Since Grails 2.0 H2 is now the default database. You need to either add the 'org.h2.Driver' class as your database driver and change the connect URL format (for example 'jdbc:h2:mem:devDb') in DataSource.groovy or add HSQLDB as a dependency of your application.</code></pre><p class="paragraph"/>As the message explains, you can fix this in one of two ways. The quickest is to add this line to <code>BuildConfig.groovy</code>:<p class="paragraph"/><div class="code"><pre>&#8230;
+grails.project.dependency.resolution = &#123;
+    &#8230;
+    dependencies &#123;
+        runtime <span class="java&#45;quote">"hsqldb:hsqldb:1.8.0.10"</span>
+        &#8230;
+    &#125;
+&#125;</pre></div><p class="paragraph"/>The above version of the HSQLDB driver is included with the Grails distribution, so the project doesn't even need to pull it from the internet. If you'd prefer to upgrade to H2, then modify the HSQLDB driver class name and connection URLs in <code>DataSource.groovy</code>:<p class="paragraph"/><div class="code"><pre>dataSource &#123;
+    driverClassName = <span class="java&#45;quote">"org.h2.Driver"</span><p class="paragraph"/>    // In memory database
+    url = <span class="java&#45;quote">"jdbc:h2:mem:devDb;MVCC=TRUE"</span><p class="paragraph"/>    // File&#45;based database
+    //url = <span class="java&#45;quote">"jdbc:h2:prodDb;MVCC=TRUE"</span>
+    &#8230;
+&#125;</pre></div><p class="paragraph"/>If you go for this approach, there's no need to add the H2 driver JAR as an explicit dependency as it is included vi the <code>inherits("global")</code> directive.<p class="paragraph"/><h3>Abstract domain classes</h3><p class="paragraph"/>Consider this model:<p class="paragraph"/><img border="0" class="center" src="../img/upgradeToGrails2/abstract-domain-inheritance.png"></img><p class="paragraph"/>where the <code>Person</code> domain class is declared as abstract. Before Grails 2, this model would result in two separate tables: one for <code>Employee</code> and one for <code>Manager</code>. This doesn't really make a lot of sense, because the two domain classes share common properties from <code>Person</code>, so Grails 2 will now create a single <code>Person</code> table that <code>Employee</code> and <code>Manager</code> use.<p class="paragraph"/>If you have existing data based on the old model, this change will break your application. You have a couple of options:
+<ol>
+<li>migrate your data to the new model with a shared table; or</li>
+<li>move the abstract domain class, e.g. <code>Person</code>, to the 'src/groovy' directory.</li>
+</ol><p class="paragraph"/>Of these, the latter is much simpler.<p class="paragraph"/><h3>Problematic property names</h3><p class="paragraph"/>Some domain class property names will cause issues for various reasons:
+<ul class="star">
+<li><code>environment</code></li>
+<li><code>load</code></li>
+<li><code>get</code></li>
+<li><code>list</code></li>
+<li><code>find</code></li>
+<li><code>findAll</code></li>
+<li><code>where</code></li>
+</ul><p class="paragraph"/>The problem with <code>environment</code> is fixed in 2.0.1. The problem with domain class properties that match the names of static GORM methods will be fixed in a future version.<p class="paragraph"/><h2 id="s3">The web layer</h2><p class="paragraph"/>Grails 2 introduces quite a few new features to controllers and other parts of the web layer, but few breaking changes. One of the most significant changes is that actions can now be declared as public methods and we recommend you migrate your existing code to this approach if you can. However, this means that if you have public methods in controllers already, they will suddenly be exposed as actions - probably not what you want. Be sure to change those methods to either <code>private</code> or <code>protected</code> scope.<p class="paragraph"/><h3>Redirects</h3><p class="paragraph"/>In order to allow code to modify the response after issuing a redirect, Grails had to bypass the standard Servlet <code>sendRedirect()</code> method. As a side-effect, the <code>redirect()</code> is now dependent on the <code>grails.serverURL</code> configuration setting. If this doesn't match the URL of your application, redirects will stop working.<p class="paragraph"/>The simplest way to avoid this problem is to remove the setting unless you need it. If you need it (usually for production deployments) then the value should already match the URL of your application. This mostly impacts development where old projects often have a legacy value that doesn't work.<p class="paragraph"/>Another side-effect is that you can no longer use the <code>response.isCommitted()</code> method to determine whether a redirect has taken place. Instead, there is a new <code>request.isRedirected()</code> method that you should use - <strong class="bold">note</strong> that the new method is on <code>request</code> rather than <code>response</code>&#33;<p class="paragraph"/><h3>Content negotiation</h3><p class="paragraph"/>Prior to version 2, Grails would factor in the request content type when performing content negotiation. However, the request content type is a bad basis for determining the response content type - that's what the <code>Accept</code> header is for! So, Grails 2 ignores it. This may break your usage of <code>withFormat()</code> if you depend on selection by request content type.<p class="paragraph"/>If you want to do something based on the request content type, then use the <code>withFormat()</code> method on the <code>request</code> object instead:<p class="paragraph"/><div class="code"><pre>request.withFormat &#123;
+    xml &#123;
+        // Do something <span class="java&#45;keyword">for</span> XML request content
+    &#125;
+    json &#123;
+        // Do something <span class="java&#45;keyword">for</span> JSON request content
+    &#125;
+&#125;</pre></div><p class="paragraph"/><h3>AJAX tags + Prototype.js</h3><p class="paragraph"/>Grails has packaged Prototype.js by default for a long time. That finally changed with Grails 2 and in fact  <em class="italic">no</em>  Javascript library is included directly any more. Instead, a new Grails 2 project will automatically have the jQuery  <em class="italic">plugin</em>  as a dependency.<p class="paragraph"/>What this means for existing projects is that if you use the adaptive AJAX tags with Prototype.js, you will need to add the new <a href="http://grails.org/plugin/prototype" target="blank">Prototype plugin</a> as a dependency.<p class="paragraph"/><h3>Installing Resources plugin</h3><p class="paragraph"/>The <a href="http://grails.org/plugin/resources" target="blank">Resources plugin</a> is a great way of managing static web resources such as CSS and Javascript files. Many pre-2 projects are probably already using it. If that's the case, be warned that Grails 2 is Resources-aware and modifies the behaviour of the <code>&#60;g:resource&#62;</code> and <code>&#60;g:javascript&#62;</code> tags if the plugin is installed.<p class="paragraph"/>All this means in reality is that you should use the <code>&#60;r:layoutResources&#62;</code> tags for all your responses, although AJAX responses are a bit of a special case.<p class="paragraph"/>We don't really recommend that you include markup and inline Javascript in AJAX responses. However, if you do, then switch to a raw <code>&#60;script&#62;</code> tag rather than <code>&#60;g:javascript&#62;</code>.<p class="paragraph"/>One final thing on Resources: it automatically adds a <code>/static</code> URL to your application under which all static resources are served, so if you have URL-based access control rules, be sure to update them as appropriate.<p class="paragraph"/><h2 id="s4">Testing</h2><p class="paragraph"/>Grails 2 comes with a much improved unit testing framework, but it's completely incompatible with the old one. The old one is still there, so your existing tests should still run. But if you want to update your test cases, then you will have to migrate them wholesale. In other words, for each test case that you want to migrate, you will probably have to rewrite it using the new annotations.<p class="paragraph"/><h2 id="s5">Plugins</h2><p class="paragraph"/>The following plugin versions are known to work with Grails 2:<p class="paragraph"/><table class="wiki-table" cellpadding="0" cellspacing="0" border="0"><tr><th><strong class="bold">Plugin</strong></th><th><strong class="bold">Version</strong></th><th><strong class="bold">Notes</strong></th></tr><tr class="table-odd"><td>resources</td><td>1.1.6</td><td>&#160;</td></tr><tr class="table-even"><td>spring-security-core</td><td>1.2.7.1</td><td>&#160;</td></tr></table><p class="paragraph"/></div>
+        </div>
+        <script type="text/javascript" src="../js/application.js"></script>
+    </body>
+</html>
