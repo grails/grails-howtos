@@ -34,7 +34,7 @@ import org.radeox.engine.context.BaseInitialRenderContext
  * The aliases are IDs on the heading HTML elements, so can be used as URL
  * fragments in links - useful for generating a TOC.</li>
  * <li><em>resourcesPath</em>: The relative path to the parent directory of the
- * 'images', 'css', and 'js' folders.</li>
+ * 'img', 'css', and 'js' folders.</li>
  * </ul>
  *
  * @author Peter Ledbrook
@@ -49,7 +49,7 @@ class HowToPublisher {
     /** The temporary work directory */
     File workDir
     /** The directory containing any images to use */
-    File images = new File("resources/images")
+    File img = new File("resources/img")
     /** The directory containing any CSS to use */
     File css = new File("resources/css")
     /** The directory containing any Javascript to use */
@@ -136,6 +136,7 @@ class HowToPublisher {
         }
 
         context = new BaseInitialRenderContext()
+        context.set HowToDocEngine.RESOURCES_CONTEXT_PATH, calculatePathToResources()
         engine = new HowToDocEngine(context)
         context.renderEngine = engine
 
@@ -152,7 +153,7 @@ class HowToPublisher {
         def ant = new AntBuilder()
         ant.mkdir(dir: outputDir)
 
-        for (type in ["images", "css", "js"]) {
+        for (type in ["img", "css", "js"]) {
             copyResourcesOfType ant, outputDir, type
         }
     }
@@ -176,7 +177,7 @@ class HowToPublisher {
     }
 
     protected String calculatePathToResources(String pathToRoot = '') {
-        return language ? '../' + pathToRoot : pathToRoot
+        return language ? new File('..', pathToRoot).path : pathToRoot
     }
 
     protected stripSuffix(String name) {

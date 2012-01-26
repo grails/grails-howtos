@@ -37,7 +37,7 @@ class PublishHowToTask extends DefaultTask {
         def publisher = new HowToPublisher(sourceDir, targetDir)
         publisher.workDir = workDir
         publisher.language = language ?: 'en'
-        publisher.images = project.file("${resourcesDir}/images")
+        publisher.img = project.file("${resourcesDir}/img")
         publisher.css = project.file("${resourcesDir}/css")
         publisher.js = project.file("${resourcesDir}/js")
         publisher.templates = project.file("${resourcesDir}/templates")
