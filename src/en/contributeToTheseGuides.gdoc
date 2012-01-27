@@ -1,0 +1,67 @@
+h1. Contribute to these guides
+
+These HOWTO guides are built from a source project hosted on GitHub that anyone is free to contribute to. Contributions can take the form of modifications to existing guides, the addition of new ones, or changes to the styling of the published HOWTOs.
+
+If you would like to contribute, simply send an _internal_ GitHub message to 'pledbrook' requesting commit access. Once that has been granted, you will be able to commit directly to the "project repository":https://github.com/pledbrook/grails-howtos .
+
+h2. Building the guides
+
+Once you have cloned the repository locally, all you have to do is run
+
+bc.
+./gradlew docs
+
+from the root of the project. This will generate all the HOWTO guides in all the languages inside the @build/docs@ directory. If you would like to generate only the guides for a particular language, simply add the language suffix. For example,
+
+bc.
+./gradlew docs_fr
+
+will generate the French HOWTO guides but no others.
+
+h2. Creating a HOWTO
+
+All the guides are standalone gdoc files that reside under the @src/$lang@ directories. So, to add a 'Deploy to JBoss' English HOWTO, you would simply create the file 'src/en/deployToJboss.gdoc' and add the HOWTO content to it.
+
+The only requirements for each HOWTO gdoc file are that:
+
+# the first line is an @h1.@ heading, which becomes the title of the HOWTO; and
+# @h2.@ is used for the top-level sections.
+
+For example, a very basic gdoc would look like:
+
+{code}
+\h1. Deploy to JBoss
+
+Introduction to this guide
+
+\h2. The basics
+
+...
+{code}
+
+Links between HOWTOs are not supported at this moment in time, but external links are the same as for [standard gdoc syntax|http://grails.org/WikiSyntax].
+
+As soon as you create the gdoc file, it will be picked up automatically by the build the next time you run the @docs@ task. The resulting HTML file will have the same base name as the gdoc file, for example 'deployToJboss.html'.
+
+If you wish to add an image to a HOWTO, place the file in the 'resources/img' directory and insert an entry like \!<path to image>\! into the gdoc source. For example, if you have the image 'resources/img/deployToJboss/deployCycle.png' then link to it using the syntax:
+
+bc.
+\!deployToJboss/deployCycle.png\!
+
+Note that the path specified inside the exclamation marks is relative to the 'resources/img' directory.
+
+h2. Customising the styling
+
+The HTML layout for the HOWTO guides is defined in the file 'resources/templates/how-to-template.html'. Static resources required by the template, such as images and stylesheets, should be placed in the respective directory under 'resources/img', 'resources/css' and 'resources/js' as appropriate.
+
+When adding links to static resources inside the template, be sure to use the @resourcesPath@ variable like so:
+
+{code:xml}
+<link href="${resourcesPath}/css/main.css" type="text/css" ...>
+{code}
+
+This ensures that the template works regardless of whether the generated guide is in a language-specific directory or not.
+
+h2. Community
+
+This is an open repository allowing anyone who's interested to contribute. On the flip side, there is no central editorial control, so contributors are expected to police the system themselves to prevent abuse.
