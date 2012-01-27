@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" type="text/css" href="../css/main.css" />
+        <link rel="shortcut icon" href="../img/favicon.ico" />
+        <script type="text/javascript" src="../js/jquery-1.7.1.min.js"></script>
+        <!--[if !IE]>-->
+        <style type="text/css">
+        body {
+            font-size:16px;
+        }
+        </style>
+        <!--<[endif]-->
+        <title>How To: Contribute to these guides</title>
+    </head>
+    <body>
+        <div id="header-container">
+            <div id="header">
+                <a href="http://grails.org"><img src="../img/grails.png" alt="GRAILS HOW-TOs" /></a>
+                <a id="all_links_toggler">Browse all How-Tos</a>
+                <div id="all_links">
+                    <a href="contributeToTheseGuides.html">Contribute to these guides</a>
+                    <a href="upgradeToGrails2.html">Upgrade to Grails 2</a>
+                </div>
+            </div>
+        </div>
+        <div id="main-container">
+            <div id="toc">
+                <h3>Sections</h3>
+                <ol>
+                
+                    <li><a href="#s1">Building the guides</a></li>
+                
+                    <li><a href="#s2">Creating a HOWTO</a></li>
+                
+                    <li><a href="#s3">Customising the styling</a></li>
+                
+                    <li><a href="#s4">Community</a></li>
+                
+                </ol>
+            </div>
+
+            <div id="content"><h1>Contribute to these guides</h1><p class="paragraph"/>These HOWTO guides are built from a source project hosted on GitHub that anyone is free to contribute to. Contributions can take the form of modifications to existing guides, the addition of new ones, or changes to the styling of the published HOWTOs.<p class="paragraph"/>If you would like to contribute, simply send an  <em class="italic">internal</em>  GitHub message to 'pledbrook' requesting commit access. Once that has been granted, you will be able to commit directly to the <a href="https://github.com/pledbrook/grails-howtos" target="blank">project repository</a> .<p class="paragraph"/><h2 id="s1">Building the guides</h2><p class="paragraph"/>Once you have cloned the repository locally, all you have to do is run<p class="paragraph"/><pre class="bq"><code>
+./gradlew docs</code></pre><p class="paragraph"/>from the root of the project. This will generate all the HOWTO guides in all the languages inside the <code>build/docs</code> directory. If you would like to generate only the guides for a particular language, simply add the language suffix. For example,<p class="paragraph"/><pre class="bq"><code>
+./gradlew docs_fr</code></pre><p class="paragraph"/>will generate the French HOWTO guides but no others.<p class="paragraph"/><h2 id="s2">Creating a HOWTO</h2><p class="paragraph"/>All the guides are standalone gdoc files that reside under the <code>src/$lang</code> directories. So, to add a 'Deploy to JBoss' English HOWTO, you would simply create the file 'src/en/deployToJboss.gdoc' and add the HOWTO content to it.<p class="paragraph"/>The only requirements for each HOWTO gdoc file are that:
+<ol>
+<li>the first line is an <code>h1.</code> heading, which becomes the title of the HOWTO; and</li>
+<li><code>h2.</code> is used for the top-level sections.</li>
+</ol><p class="paragraph"/>For example, a very basic gdoc would look like:<p class="paragraph"/><div class="code"><pre>&#104;1. Deploy to JBoss<p class="paragraph"/>Introduction to <span class="java&#45;keyword">this</span> guide<p class="paragraph"/>&#104;2. The basics<p class="paragraph"/>...</pre></div><p class="paragraph"/>Links between HOWTOs are not supported at this moment in time, but external links are the same as for <a href="http://grails.org/WikiSyntax" target="blank">standard gdoc syntax</a>.<p class="paragraph"/>As soon as you create the gdoc file, it will be picked up automatically by the build the next time you run the <code>docs</code> task. The resulting HTML file will have the same base name as the gdoc file, for example 'deployToJboss.html'.<p class="paragraph"/>If you wish to add an image to a HOWTO, place the file in the 'resources/img' directory and insert an entry like &#33;&#60;path to image&#62;&#33; into the gdoc source. For example, if you have the image 'resources/img/deployToJboss/deployCycle.png' then link to it using the syntax:<p class="paragraph"/><pre class="bq"><code>
+&#33;deployToJboss/deployCycle.png&#33;</code></pre><p class="paragraph"/>Note that the path specified inside the exclamation marks is relative to the 'resources/img' directory.<p class="paragraph"/><h2 id="s3">Customising the styling</h2><p class="paragraph"/>The HTML layout for the HOWTO guides is defined in the file 'resources/templates/how-to-template.html'. Static resources required by the template, such as images and stylesheets, should be placed in the respective directory under 'resources/img', 'resources/css' and 'resources/js' as appropriate.<p class="paragraph"/>When adding links to static resources inside the template, be sure to use the <code>resourcesPath</code> variable like so:<p class="paragraph"/><div class="code"><pre><span class="xml&#45;tag">&#60;link href=<span class="xml&#45;quote">"$&#123;resourcesPath&#125;/css/main.css"</span> type=<span class="xml&#45;quote">"text/css"</span> ...&#62;</span></pre></div><p class="paragraph"/>This ensures that the template works regardless of whether the generated guide is in a language-specific directory or not.<p class="paragraph"/><h2 id="s4">Community</h2><p class="paragraph"/>This is an open repository allowing anyone who's interested to contribute. On the flip side, there is no central editorial control, so contributors are expected to police the system themselves to prevent abuse.
+</div>
+        </div>
+        <script type="text/javascript" src="../js/application.js"></script>
+    </body>
+</html>
