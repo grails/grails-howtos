@@ -94,6 +94,16 @@ h2. The web layer
 
 Grails 2 introduces quite a few new features to controllers and other parts of the web layer, but few breaking changes. One of the most significant changes is that actions can now be declared as public methods and we recommend you migrate your existing code to this approach if you can. However, this means that if you have public methods in controllers already, they will suddenly be exposed as actions - probably not what you want. Be sure to change those methods to either @private@ or @protected@ scope.
 
+h3. Scaffolding and error views
+
+Grails 2 introduces some nice HTML5 scaffolding and an updated error view. Both of these work perfectly out of the box for a new project, but not when you upgrade an existing project. The simplest thing to do is create a new Grails 2 project and then copy the relevant files to your existing one:
+
+bc.
+cp <path to new project>/web-app/css/main.css <path to existing project>/web-app/
+cp <path to new project>/grails-app/views/error.gsp <path to existing project>/grails-app/views/
+
+*Note* If you have customised either file, then the upgrade process is trickier as you have to re-apply your changes to the new files. In fact, it's probably better to rename 'main.css' to something else (such as 'app.css') and use that for your own views. In other words, leave 'main.css' for the scaffolding.
+
 h3. Redirects
 
 In order to allow code to modify the response after issuing a redirect, Grails had to bypass the standard Servlet @sendRedirect()@ method. As a side-effect, the @redirect()@ is now dependent on the @grails.serverURL@ configuration setting. If this doesn't match the URL of your application, redirects will stop working.
