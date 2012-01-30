@@ -33,27 +33,27 @@ task cloneGhPages(type: grails.doc.gradle.GitCloneTask) {
 }
 cloneGhPages.doFirst { assert gitDir.deleteDir() }
 
-task copyHtml(type: Copy) {
+task copyHtml(type: Copy, dependsOn: [cloneGhPages, docs]) {
     from outputDir
     from file("resources/index.html")
     into gitDir
 }
 
-task gitAddFiles(type: grails.doc.gradle.GitAddTask) {
+task gitAddFiles(type: grails.doc.gradle.GitAddTask, dependsOn: [copyHtml]) {
     repository = gitDir
     paths = ["."]
 }
 
-task gitCommit(type: grails.doc.gradle.GitCommitTask) {
+task gitCommit(type: grails.doc.gradle.GitCommitTask, dependsOn: [gitAddFiles]) {
     repository = gitDir
     message = "Automated publication of the HOWTO guides."
 }
 
-task gitPush(type: grails.doc.gradle.GitPushTask) {
+task gitPush(type: grails.doc.gradle.GitPushTask, dependsOn: [gitCommit]) {
     repository = gitDir
 }
 
-task deploy(dependsOn: [docs, cloneGhPages, copyHtml, gitAddFiles, gitCommit, gitPush])
+task deploy(dependsOn: [gitPush])
 
 artifacts {
     archives dist
