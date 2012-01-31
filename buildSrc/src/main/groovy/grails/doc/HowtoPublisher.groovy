@@ -227,6 +227,10 @@ class HowToDocument implements Writable {
         else return null
     }
 
+    /**
+     * Takes the HTML generated from a wiki page and extracts the 2nd-level
+     * headings into a mini table of contents.
+     */
     protected processSections(wikiHtml) {
         def m = sectionPattern.matcher(wikiHtml)
         if (m) {
@@ -234,8 +238,14 @@ class HowToDocument implements Writable {
             def index = 1
             m.reset()
             while (m.find()) {
+                // Create an HTML anchor for this section.
                 def alias = "s$index"
+
+                // Save the heading's content in the TOC. Doesn't need
+                // HTML escaping when rendered in an HTML template!
                 toc[alias] = m.group(2)
+
+                // Insert an 'id' attribute into this heading.
                 m.appendReplacement(buffer, '<h2 id="' + alias + '"$1>$2</h2>')
                 index++
             }

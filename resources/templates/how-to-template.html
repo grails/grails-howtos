@@ -30,7 +30,7 @@
                 <h3>Sections</h3>
                 <ol>
                 <% for (entry in toc) { %>
-                    <li><a href="#${entry.key.encodeAsUrlFragment()}">${entry.value?.encodeAsHtml()}</a></li>
+                    <li><a href="#${entry.key.encodeAsUrlFragment()}">${entry.value}</a></li>
                 <% } %>
                 </ol>
             </div>
