@@ -1,0 +1,19 @@
+h1. Manage databases
+
+Grails is really easy to get started with on green-field projects because the domain model defines the database schema, so you don't have to worry about that side of things. But what if you need to work against an existing database? In that case, you have to carefully map the domain classes yourself. If you have a large schema, that could take a while.
+
+What about when new versions of your application go live? You can't limit the application to the original schema used for the first version, otherwise it wouldn't be able to evolve properly. You have to be able to migrate the schema and also any existing data.
+
+Both of these scenarios have corresponding plugins that can help solve the problems and this guide will explain how to get the best out of them.
+
+h2. Reverse engineering a database
+
+TBC
+
+h2. Getting started with data migration
+
+TBC
+
+h2. Data migration tips & tricks
+
+TBC
