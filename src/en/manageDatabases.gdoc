@@ -12,8 +12,336 @@ TBC
 
 h2. Getting started with data migration
 
-TBC
+The database migration plugin allows you to keep track of the structural changes made to your database. It makes the automatic changes made by Grails visible, trackable and capable of being committed into source control. 
+
+In this section, we will walk you through a simple application using the database migration plugin so you can understand how it works. 
+
+h3. Create your application and add a domain class
+
+Assuming you already have Grails installed, open a terminal window and type:
+
+{code}
+grails create-app myApp
+cd myApp
+grails create-domain-class com.example.Book
+grails generate-all "*"
+{code}
+
+You just created a simple Grails application with a domain class called Book. You also generated the scaffolded views for the Book domain object.
+
+h3. Installing the plugin
+Open a terminal window and call
+
+{code}grails install-plugin database-migration{code}
+
+This will install the Database Migration plugin. 
+
+h3. Creating your changelog.
+
+The database migration plugin keeps track of changes made in your application via a changelog. Think of the changelog as a diary of changes you have made to your database in the life of your application. 
+
+Open a console and type
+
+{code}
+grails dbm-generate-changelog changelog.groovy
+{code}
+
+Navigate to the directory @grails-app/migrations/@, you should see a file there called @changelog.groovy@.
+
+Open this file, you should see something like the following:
+
+{code}
+databaseChangeLog = {
+}
+{code}
+
+Nothing exciting here, just an empty list of changes. 
+
+h3. Capturing a snapshot of your current domain model. 
+
+If you go back a few paragraphs, you will remember that we already have a Book domain object. How do we keep track of this? 
+
+To generate a current snapshot of your database, you need to call the @dbm-gorm-diff@ command. This command will generate a new file containing changes that are not yet in the changelog. Think of it as a mini commit in git.
+
+Make sure you are at the application root, and in a new terminal window, call
+
+{code}grails dbm-gorm-diff 2012-02-01-initial-database.groovy --add{code}
+
+The first parameter, @2012-02-01-initial-database.groovy@, is the name of the file you want to keep all the initial changes in. 
+
+Notice that I have prefixed my filename with a date, this is very useful when you are collaborating with other members in your project, as it let's you keep a rough order of migrations across git branches during merging. 
+
+The second parameter, @add@, simply tells the plugin to add this migration into the list of migrations. 
+
+Open up the directory @grails-app/migrations@, you should see two files in there:
+
+*changelog.groovy*
+{code}databaseChangeLog = {
+
+        include file: '2012-02-01-initial-database.groovy'
+}{code}
+
+*2012-02-01-initial-database.groovy*
+{code}databaseChangeLog = {
+
+        changeSet(author: "tomaslin (generated)", id: "1328137085507-1") {
+                createTable(tableName: "book") {
+                        column(autoIncrement: "true", name: "id", type: "bigint") {
+                                constraints(nullable: "false", primaryKey: "true", primaryKeyName: "bookPK")
+                        }
+
+                        column(name: "version", type: "bigint") {
+                                constraints(nullable: "false")
+                        }
+                }
+        }
+}{code}
+
+As you can see, a new changelog has been generated with your initial database, and this file has been included in your original migration file. 
+
+h3. Turning off automatic memory management by Grails.
+
+It's time to take off the database migration training wheels. By default, Grails is configured to manage your database structure for you. This is great when you're playing with the framework, but no sot good when your application is in production. You want the database migration plugin to be the only thing changing your database.
+
+To turn off the automatic update of domain classes in Grails, go to your @grails-app/conf/DataSource.groovy@ file and remove all references to @dbCreate@. 
+
+For example, your development environment used to look like this:
+
+{code}development {
+         dataSource {
+              dbCreate = "create-drop" // one of 'create', 'create-drop', 'update', 'validate', ''
+              url = "jdbc:h2:mem:devDb;MVCC=TRUE"
+          }
+      }{code}
+
+it looks like this:
+
+{code}development {
+         dataSource {
+              url = "jdbc:h2:mem:devDb;MVCC=TRUE"
+          }
+      }{code}
+
+
+For migrations to work properly with h2, you also need to start using a persistent database. 
+
+Remove all the in-memory references from your jdbc string ( or switch to something like mysql or postgres ). You do this by deleting the reference to @:mem:@ in your datasource url. 
+
+Your final development environment should look like this:
+
+{code}development {
+         dataSource {
+              url = "jdbc:h2:devDb;MVCC=TRUE"
+          }
+      }{code}
+
+Note: This will create a file that h2 will use as it's database. If you are using a source control system, make sure you add it to your .ignore or .gitignore files. 
+
+h3. Enabling automatic migrations
+
+Run your application by typing @grails run-app@ into a console window. Navigate to the book list view via @http://localhost:8080/myApp/book/list@
+
+Oh no! We have an error since we told Grails not to automatically update the database for us. Now the Book table doesn't exist and our customers are sharpening their pitchforks. To fix this, we must enable automatic database migrations on application startup. 
+
+Open your Config.groovy file and add the following properties:
+
+{code}grails.plugin.databasemigration.updateOnStart = true
+grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']{code}
+
+What you're telling your application here is to automatically bring your database up to date with the migration data when the war starts up. Restart your application and visit @http://localhost:8080/myApp/book/list@ again. There should no longer be an error - your customers put their sharp pitchforks away. 
+
+h3. Adding and keeping track of changes.
+
+At this point, you have a copy of your initial database and your Grails application automatically updates itself based on the latest data changes. Let's try out a few examples that require database migrations and see what happens.
+
+Open the file @grails-app/domain/com/example/Book.groovy@
+
+Add the following properties:
+
+{code}
+	String name
+	String backCover
+	Date publicationDate
+{code}
+
+Your domain class should now look like this:
+
+{code}
+package com.example
+
+class Book {
+
+	String name
+	String backCover
+	Date publicationDate
+	
+    static constraints = {
+    }
+}
+{code}
+
+Open up a terminal console and run a new migration
+
+{code} 
+grails dbm-update
+grails dbm-gorm-diff 2012-02-01-added-new-fields-to-book.groovy --add 
+{code}
+
+There is a new command here, @dbm-update@. Dbm-update basically tells your Grails application to update the database it is using to the latest and greatest version. You *ABSOLUTELY MUST* run this before creating a new migration, as this ensures that any migrations you have created in the interim have been applied before creating your new migration. 
+
+Open the file @grails-app/migrations/2012-02-01-added-new-fields-to-book.groovy@
+
+You should see something like the following:
+{code}databaseChangeLog = {
+
+	changeSet(author: "tomaslin (generated)", id: "1328139836195-1") {
+		addColumn(tableName: "book") {
+			column(name: "back_cover", type: "varchar(255)") {
+				constraints(nullable: "false")
+			}
+		}
+	}
+
+	changeSet(author: "tomaslin (generated)", id: "1328139836195-2") {
+		addColumn(tableName: "book") {
+			column(name: "name", type: "varchar(255)") {
+				constraints(nullable: "false")
+			}
+		}
+	}
+
+	changeSet(author: "tomaslin (generated)", id: "1328139836195-4") {
+		addColumn(tableName: "book") {
+			column(name: "publication_date", type: "timestamp") {
+				constraints(nullable: "false")
+			}
+		}
+	}
+}{code}
+
+As you can see, the database migration plugin has created a bunch of new changes that track the new columns being added when you added new properties to your domain class. 
+
+Take a look at changelog.groovy, 
+{code}databaseChangeLog = {
+
+        include file: '2012-02-01-initial-database.groovy'
+
+        include file: '2012-02-01-added-new-fields-to-book.groovy'
+}{code}
+
+The new migration has been added after the first one we created. The order of the files in this changelog allow us to track the order in which to execute migrations. 
+
+But hold on, what happens when we change our domain class. Let's say we want to use a text mapping instead of a varchar. 
+
+Let's add a database mapping for bookCover:
+
+{code}static mapping = {
+	backCover sqlType: 'text'
+}{code}
+
+Our new domain class should look like this:
+
+{code}package com.example
+
+class Book {
+
+	String name
+	String backCover
+	Date publicationDate
+	
+    static constraints = {
+    }
+	
+	static mapping = {
+		backCover sqlType: 'text'
+	}
+}{code}
+
+Let's run another migration and see what happens
+
+{code}grails dbm-update
+grails dbm-gorm-diff 2012-02-01-changed-property-types.groovy --add{code}
+
+We see a new migration has been created that modifies the table. 
+
+{code}
+changeSet(author: "tomaslin (generated)", id: "1328141759596-1") {
+	modifyDataType(columnName: "BACK_COVER", newDataType: "text(255)", tableName: "BOOK")
+}
+{code}
+
+As you continue developing your application, simply continue using the dbm-gorm-diff mechanism to keep track of your changes. And we're done!
+
+h3. Extra Credit
+
+* Try adding more domain classes and playing around with different mappings. What happens in the migrations?
+* Delete a property - what happens with the generated migration?
+* Change your development database from h2 to mysql and re-run the migrations. Are there any issues? 
 
 h2. Data migration tips & tricks
 
-TBC
+h3. Remember to check in your migrations
+
+One of the issues with using the Grails tools is that very often, migrations are forgotten on the desk of developers. Remember to always check in your migrations after you have created them. 
+
+h3. You can preview changelogs and changesets
+
+If you don't specify the @add@ parameter in dbm-gorm-diff, the result of the migration will appear in your console window. 
+
+h3. Always check your migrations
+
+A good habit is to visually inspect and run @dbm-update@ after each new migration to see if anything has broken. If you are using other hibernate dialects, it is possible that the plugin will create junk indexes or foreign keys. 
+
+h3. Resetting locks
+
+Once in a while, your application gets stuck on startup because whatever locked the database changelogs crashed. This makes your app stuck on startup since it cannot acquire the lock. To release the lock manually, enter the following SQL statement:
+
+{code} update DATABASECHANGELOGLOCK set LOCKED=0, LOCKGRANTED=null, LOCKEDBY=null {code}
+
+h3. Don't change migrations, ever. 
+
+The database migration plugin creates a checksum for each applied migration. If you look at your database, you will see a table called DATABASECHANGELOG containing all the previously applied migrations. 
+
+If you accidentally change your migrations, say, in a refactoring, these checksums will no longer match and the database migration plugin will crash and burn catastrophically. 
+
+To fix this, you need to reset the checksums in the database. To do so, issue the command
+
+{code}grails dbm-clear-checksums{code}
+
+h3. You can use Sql to assign default values to new columns
+
+One of more useful commands you can add to your database migrations is @sql()@, this allows you run arbitrary sql commands as part of your migration. If you are adding a new column and would like to change all your existing rows to have a new value, you can do so by editing your changeset. Such as,
+
+{code}
+changeSet(author: "tomaslin (generated)", id: "1328139836195-4") {
+	addColumn(tableName: "book") {
+		column(name: "back_cover", type: "varchar(255)") {
+			constraints(nullable: "false")
+		}
+	}
+	sql(''' update book set back_cover = 'Not available' ''' )
+}
+{code}
+
+h3. You can write your own changesets in groovy, but don't use Domain objects in them. 
+
+The plugin includes a pretty cool migration type called @grailsChange@. GrailsChange allows you to write your own changes in groovy. However, be aware that using domain objects in these type of migrations is not safe at all, since the domain objects used at the time this migration is ran can contain properties not yet available in the database. 
+
+h3. For more complex database changes, use @dbm-diff@ to compare databases.
+
+If you would rather compare two database versions, you can use the syntax
+
+{code}grails dbm-diff databaseToCompareTo 2012-02-01-database-dif.groovy --add{code}
+
+h3. Only compile can solve Unable to resolve class errors
+
+If you're trying to generated your changelog for the first time, you might run into an error that says 
+
+{code}
+| Configuring classpath
+| Error Error executing script DbmGenerateGormChangelog: startup failed:
+_DatabaseMigrationCommon_groovy: 28: unable to resolve class org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsAnnotationConfiguration
+  line 28, column 1.
+{code}
+
+To resolve this, just run @grails compile@ before the generate changelog command and you will see this working properly. 
