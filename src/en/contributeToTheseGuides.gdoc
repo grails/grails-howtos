@@ -2,7 +2,15 @@ h1. Contribute to these guides
 
 These HOWTO guides are built from a source project hosted on GitHub that anyone is free to contribute to. Contributions can take the form of modifications to existing guides, the addition of new ones, or changes to the styling of the published HOWTOs.
 
-If you would like to contribute, simply send an _internal_ GitHub message to 'pledbrook' requesting commit access. Once that has been granted, you will be able to commit directly to the "project repository":https://github.com/pledbrook/grails-howtos .
+If you would like to contribute, simply send an _internal_ GitHub message to 'pledbrook' requesting commit access. It's not obvious how to do this in GitHub, but basically you click the Compose Message link on your inbox/notifications page:
+
+!contributeToTheseGuides/compose_link.png!
+
+and then add the 'pledbrook' handle to the recipient field:
+
+!contributeToTheseGuides/message.png!
+
+Once access has been granted, you will be able to commit directly to the "project repository":https://github.com/pledbrook/grails-howtos .
 
 h2. Building the guides
 
