@@ -26,7 +26,7 @@ task dist(type: Zip, dependsOn: 'docs') {
 }
 
 task cloneGhPages(type: grails.doc.gradle.GitCloneTask) {
-    uri = "https://pledbrook@github.com/pledbrook/grails-howtos.git"
+    uri = "https://${project.getProperty("github.username")}@github.com/grails/grails-howtos.git"
     branch = "gh-pages"
     cloneAllBranches = true
     destination = gitDir
