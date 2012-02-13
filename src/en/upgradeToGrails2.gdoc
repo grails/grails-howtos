@@ -1,6 +1,6 @@
 h1. Upgrade to Grails 2
 
-There are always some breaking changes with any major version change of a framework. This document will navigate you through the changes you may need to make in order to get an existing 1.3.x application working with Grails 2.0. Some changes will apply to all projects. Others only affect a few projects. The complexity of upgrading an existing application also depends on what plugins are installed, so any plugins that are known to work with Grails 2 are included at the end.
+There are always some breaking changes with any major version change of a framework. This document will navigate you through the changes you may need to make in order to get an existing Grails 1.3.x application working with Grails 2.0. Some changes will apply to all projects. Others only affect a few projects. The complexity of upgrading an existing application also depends on what plugins are installed, so any plugins that are known to work with Grails 2 are included at the end.
 
 h2. First steps
 
