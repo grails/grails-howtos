@@ -1,0 +1,161 @@
+h1. Migrer vers Grails 2
+
+Il y a toujours certaines incompatiblités lors d'un changement de version majeur d'un framework. Ce document fera le tour des changements que vous aurez besoins d'effectuer pour migrer une application existante de Grails 1.3.x à Grails 2.0. Certains changements s'appliquent à tous les projets, d'autres non. La complexité de la migration dépend aussi des plugins déjà installés. Les plugins qui ont été testés avec Grails 2.0 (lors de sa sortie) apparaissent à la fin de ce guide.
+
+h2. Permiers pas
+
+La première étape est de supprimer le répertoire 'target' de votre projet. Ensuite, avec Grails 2, lancez la commande suivante :
+
+bc.
+grails upgrade --force
+
+Cette commande fera en sorte d'installer la dernière version de la définition des taglib JSP et, encore plus important, le dernier applicationContext.xml.
+
+Le fichier @web.xml@ a aussi été modifié, mais cela affecte seulement les projets qui ont un template @web.xml@ dans le répertoire 'src/templates'. Si c'est votre cas, repérez les changements que vous y avez fait, exécutez de nouveau @grails install-templates@ et, finalement, appliquez vos changements au nouveau web descriptor.
+
+Si vous souhaitez utiliser la nouvelle console interactive (pourquoi vous ne le souhaiteriez pas ?), il vous faut préparer un peu plus d'espace heap et permgen pour votre application.
+
+bc.
+export GRAILS_OPTS="-Xmx700m -XX:MaxPermSize=384m"
+
+Pour optimiser ces valeurs, vous pouvez utiliser la jconsole de la JDK pour voir combien de mémoire votre application consomme lorsque vous utilisez la console interactive.
+
+h2. Persistence
+
+La couche de persistence a été énormément modifiée ces derniers temps, surtout à cause que GORM peut maintenant être utilisé avec plusieurs engins de persistence et pas seulement avec SQL et Hibernate. Tout de même, la plupart de vos modèles ne se verront que peu modifiés (si modification il y a).
+
+h3. Nouvelle base de données en mémoire
+
+Plusieurs projets utilisent probablement l'ancienne base de données par défaut HSQLDB en développement. Grails 2 a changé pour H2 par défaut à la place. Si vous lancez votre application, vous verrez cet avertissement :
+
+bc.
+Database driver [org.hsqldb.jdbcDriver] for HSQLDB not found. Since Grails 2.0 H2 is now the default database. You need to either add the 'org.h2.Driver' class as your database driver and change the connect URL format (for example 'jdbc:h2:mem:devDb') in DataSource.groovy or add HSQLDB as a dependency of your application.
+
+Comme ce message l'explique, vous pouvez résoudre ce problème de deux façons. La méthode la plus rapide est d'ajouter cette ligne au fichier @BuildConfig.groovy@ :
+
+{code}
+...
+grails.project.dependency.resolution = {
+    ...
+    dependencies {
+        runtime "hsqldb:hsqldb:1.8.0.10"
+        ...
+    }
+}
+{code}
+
+La version ci-dessus du pilote pour HSQLDB est fourni dans la distribution de Grails, vous n'aurez donc pas besoin de la télécharger depuis Internet. Si vous préférez migrer vers H2, modifiez le fichier @DataSource.groovy@ pour utiliser le pilote de H2 ainsi que son URL de connection :
+
+{code}
+dataSource {
+    driverClassName = "org.h2.Driver"
+
+    // In memory database
+    url = "jdbc:h2:mem:devDb;MVCC=TRUE"
+
+    // File-based database
+    //url = "jdbc:h2:prodDb;MVCC=TRUE"
+    ...
+}
+{code}
+
+Si vous utilisez cette méthode, vous n'avez pas besoin d'inclure le JAR de H2 en tant que dépendence explicite car il est inclu par la directive @inherits("global")@.
+
+h3. Classes de domaine abstraites
+
+Selon ce modèle :
+
+!upgradeToGrails2/abstract-domain-inheritance.png!
+
+@Person@ est déclaré comme une classe abstraite. Avant Grails 2, ce modèle était persisté en deux tables séparées, une pour @Employee@ et une autre pour @Manager@. Cela ne fait pas vraiment de sens car les deux modèles partagent des propriétés de la classe @Person@. Alors Grails 2 va maintenant créer une table unique @Person@ que @Employee@ et @Manager@ vont utiliser.
+
+Si vous avez des données basées sur le vieux modèle, ce changement brisera votre application. Plusieurs options s'offrent à vous :
+
+# Migrer vos données vers le nouveau modèle avec une table partagée; ou
+# Déplacer votre classe abstraite dans le répertoire 'src/groovy'.
+
+La dernière de ces deux options est généralement la plus simple à effectuer.
+
+h3. Nom de propriété problématique
+
+Quelques propriétés des classes de domaine posent problèmes pour différentes raisons :
+
+* @environment@
+* @load@
+* @get@
+* @list@
+* @find@
+* @findAll@
+* @where@
+
+Le problème avec @environnement@ est fixé dans Grails 2.0.1. Les autres problèmes, les propriétés identiques au méthodes static injectées par GORM, seront fixés dans des versions futures.
+
+h2. La couche web
+
+Grails 2 introduit beaucoup de nouvelles fonctionnalités aux controlleurs ainsi qu'aux autres parties de la couche web mais très peu de ces changements briseront votre code. Le plus grand changement est que les actions peuvent être déclarées comme des méthodes publiques et nous vous recommandons de le faire. Par contre, cela signifie que si vous avez déjà des méthodes publiques, elles seront considérées comme des actions - ce n'est probablement pas ce que vous désirez. Assurez-vous de modifier ces méthodes pour les mettre @private@ ou @protected@.
+
+h3. Scaffolding et error view
+
+Grails 2 introduit un nouveau scaffolding en HTML5 ainsi qu'une nouvelle 'error view'. Ces éléments fonctionnent très bien 'out-of-the-box' mais pas dans un projet migré. La façon la plus simple d'avoir ces éléments est de créer un nouveau projet avec Grails 2 et de copier les fichiers dans votre projet existant :
+
+bc.
+cp <path to new project>/web-app/css/main.css <path to existing project>/web-app/
+cp <path to new project>/grails-app/views/error.gsp <path to existing project>/grails-app/views/
+
+*NB :* Si vous avez modifié ces fichiers, la migration est un peu plus complexe. Vous devez réappliquer vos changements à ces nouveaxu fichiers. En fait, il est mieux de renommer 'main.css' en quelque chose d'autre (comme app.css) et l'utiliser pour vos propres vues. En d'autres mots, laissez 'main.css' pour le scaffolding.
+
+h3. Redirections
+
+Afin de permettre au code de modifier la réponse après avoir effectuer une redirection, Grails a besoins d'outrepasser la méthode @sendRedirect()@ du servlet standard. Ceci fait en sorte que @redirect()@ est maintenant dépedant de la propriété de configuration @grails.serverURL@. Si cette propriété ne correspond pas à l'URL de votre application, les redirections ne fonctionneront plus.
+
+La façon la plus simple afin d'éviter ce problème est de ne plus utiliser cette configuration sauf si vous en avez absolument besoin. Si vous l'utilisez (normalement dans un environnement de production) alors cette valeur correspond déjà à l'URL de votre application. Bref, cela affecte uniquement les environnements de développement qui utilisent une URL obsolète qui ne fonctionne pas.
+
+Un autre problème causé par ce changement est que la méthode @response.isCommitted()@ ne fonctionne plus pour déterminer s'il y a eut une redirection. À la place, il y a une nouvelle méthode @request.isRedirected()@ que vous devrez utiliser - *attention* cette méthode s'appelle sur la propriété @request@ et non sur @response@!
+
+h3. Negotiation de contenu
+
+Avant la version 2, Grails utilisait le type de la requête pour faire sa négotiation de contenu. Par contre, le type de la requête est une mauvaise base pour déterminer le type de la réponse - c'est pour ça qu'a été créé le header @Accept@! Alors Grails 2 l'ignore maintenant. Cela peut briser votre usage de @withFormat()@ si vous dépendez du type de la requête.
+
+Si vous désirez effectuer quelque chose selon le type de la requête, alors utilisez simplement la méthode @withFormat@ de la propriété @request@ à la place :
+
+{code}
+request.withFormat {
+    xml {
+        // Do something for XML request content
+    }
+    json {
+        // Do something for JSON request content
+    }
+}
+{code}
+
+h3. AJAX tags + Prototype.js
+
+Grails a fournit prototype.js par défaut pendant longtemps. Finalement, cela a été modifié : Grails 2 ne fournit plus de librairie Javascript. À la place, Grails 2 installe le plugin JQuery automatiquement en tant que dépendance de votre projet.
+
+Si votre projet utilise les tags AJAX de Prototype.js, vous devrez installer le nouveau [plugin Prototype|http://grails.org/plugin/prototype] en tant que dépendance.
+
+h3. Installation du plugin Resources
+
+Le [plugin Resources|http://grails.org/plugin/resources] est une bonne façon de gérer les ressources web statiques comme les fichiers CSS et Javascript. Beaucoup de projets avant Grails 2 l'utilisent déjà. Si c'est le cas, faite attention car Grails 2 est resources-aware et modifie le comportement de @<g:resource>@ et @<g:javascript>@ si le plugin est installé.
+
+Cela signifie en fait que vous devriez utiliser @<r:layoutResources>@ dans toutes vos réponses web, sauf peut-être pour les réponses AJAX qui sont un peu plus complexe.
+
+Nous ne vous recommandons pas d'utiliser du markup et du javascript dans vos réponses AJAX. Par contre, si vous le faite, utiliser @<script>@ à la place de @<g:javascript>@.
+
+Une dernière chose à propos des ressources : L'url @/static@ est automatiquement créée pour déservir vos ressources. Alors si vous avez des règles de contrôle d'accès basées sur l'url, vous devrez les mettre à jour.
+
+h2. Les tests
+
+Grails 2 vient avec un framework de test énormément amélioré, par contre, il est complètement incompatible avec l'ancien. L'ancien est toujours là donc vos tests existants vont encore fonctionner. Par contre, si vous souhaitez les mettre à jour, il va falloir les réécrire entièrement. Si vous optez pour ce scénario, jetez un coup d'oeil aux nouvelles annotations.
+
+h2. Plugins
+
+Les versions des plugins suivants fonctionnent avec Grails 2 :
+
+{table}
+*Plugin* | *Version* | *Notes*
+resources | 1.1.6 |
+spring-security-core | 1.2.7.1 |
+{table}
+
