@@ -16,6 +16,7 @@
 package grails.doc
 
 import grails.doc.internal.StringEscapeCategory
+import groovy.text.SimpleTemplateEngine
 import groovy.text.Template
 import org.apache.commons.logging.LogFactory
 import org.radeox.engine.context.BaseInitialRenderContext
@@ -109,17 +110,22 @@ class HowToPublisher {
         def outputDir = calculateLanguageDir(target?.absolutePath ?: "./docs")
         copyResources outputDir
 
-        def templateFile = new File(templates, "how-to-template.html")
-        def templateEngine = new groovy.text.SimpleTemplateEngine()
-        def howToTemplate = templateEngine.createTemplate(templateFile.newReader(encoding))
-
         def files = src.listFiles()?.findAll { it.name.endsWith(".gdoc") } ?: []
-        for (f in files) {
-            def wikiHtml = generateHtml(f)
-            def doc = new HowToDocument(wikiHtml, howToTemplate, calculatePathToResources())
-            def outFile = new File(outputDir, stripSuffix(f.name) + ".html")
-            outFile.withWriter(encoding) { w -> w.write doc }
+        def docs = files.collect { f -> new HowToDocument(f, generateHtml(f)) }
+
+        // The HTML page template may need the file names and titles to generate links.
+        def howToTemplate = new SimpleTemplateEngine().createTemplate(templateFile.newReader(encoding))
+        def filenamesToTitles = docs.collectEntries { d -> [ stripSuffix(d.source.name), d.title ] }
+
+        for (d in docs) {
+            def outFile = new File(outputDir, stripSuffix(d.source.name) + ".html")
+            def page = new HowToPage(d, howToTemplate, calculatePathToResources(), filenamesToTitles)
+            outFile.withWriter(encoding) { w -> w.write page }
         }
+    }
+
+    protected File getTemplateFile() {
+        return new File(templates, "how-to-template.html")
     }
 
     protected String generateHtml(file) {
@@ -192,29 +198,26 @@ class HowToPublisher {
  * produced from a wiki page. It's main use is to generate the final
  * HTML page including the layout and any table of contents.
  */
-class HowToDocument implements Writable {
+class HowToDocument {
     static final titlePattern = ~/<h1[^>]*>(.*?)<\/h1>/
     static final sectionPattern = ~/<h2([^>]*)>(.*?)<\/h2>/
 
     def template
 
+    private source
     private html
     private toc = [:]
     private title
-    private pathToRoot
 
-    HowToDocument(String wikiHtml, Template template, String pathToRoot) {
+    HowToDocument(source, String wikiHtml) {
+        this.source = source as File
         this.html = generateToc(wikiHtml)
-        this.template = template
-        this.pathToRoot = pathToRoot
     }
 
-    String getHtml() { return makeTemplate().toString() }
+    File getSource() { return source }
+    String getHtml() { return html }
     String getTitle() { return title }
-
-    Writer writeTo(Writer writer) {
-        writer.write(makeTemplate())
-    }
+    Map getToc() { return Collections.unmodifiableMap(toc) }
 
     protected generateToc(wikiHtml) {
         title = extractTitle(wikiHtml)
@@ -255,8 +258,35 @@ class HowToDocument implements Writable {
         }
         else return wikiHtml
     }
+}
+
+/**
+ * Composes a HowToDocument and an HTML Groovy template into a single HTML page.
+ * Whenever it is written, the page is regenerated.
+ */
+class HowToPage implements Writable {
+    private doc
+    private template
+    private pathToRoot
+    private filenamesToTitlesMap
+
+    HowToPage(doc, Template template, String pathToRoot, Map filenamesToTitlesMap) {
+        this.doc = doc
+        this.template = template
+        this.pathToRoot = pathToRoot
+        this.filenamesToTitlesMap = [*: filenamesToTitlesMap]
+    }
+
+    Writer writeTo(Writer writer) {
+        writer.write(makeTemplate())
+    }
 
     protected makeTemplate() {
-        return template.make(title: title, content: html, toc: toc, resourcesPath: pathToRoot)
+        return template.make(
+                title: doc.title,
+                content: doc.html,
+                toc: doc.toc,
+                howtos: filenamesToTitlesMap,
+                resourcesPath: pathToRoot)
     }
 }
