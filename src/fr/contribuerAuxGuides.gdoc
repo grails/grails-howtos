@@ -1,0 +1,77 @@
+h1. Contribuer aux guides
+
+Ces guides sont générés à partir du code source hébergé et partagé sur GitHub. Ses contributions peuvent prendre la forme d'une modification ou de l'ajout de nouvelles pages ou encore de la modification du style de ces guides.
+
+Pour contribuer, envoyez simplement un message _interne_ via GitHub à 'pledbrook' pour lui demander l'accès au commit. Ce n'est pas très clair comment faire dans GitHub, il faut cliquer sur le lien 'Compose Message' dans votre boîte de réception (inbox/notifications) :
+
+!contributeToTheseGuides/compose_link.png!
+
+Ensuite, ajoutez 'pledbrook' comme récipiendaire:
+
+!contributeToTheseGuides/message.png!
+
+Peter Ledbrooke ne parle pas français (ou le parle-t-il ?), envoyez lui le message anglais suivant : "Please add to grails-howtos project".
+
+Une fois que vous avez l'accès, vous pourrez commiter directement sur le "code source du projet":https://github.com/grails/grails-howtos 
+
+h2. Générer le guide
+
+Une fois que vous avez cloné le projet localement, lancez cette commande :
+
+bc.
+./gradlew docs
+
+dans le répertoire racine du projet. Cela va générer les pages HOWTOs de ce guide dans chacune des langues du répertoire @build/docs@. Pour générer le guide pour une langue spécifique, ajoutez la langue en suffix comme ceci
+
+bc.
+./gradlew docs_fr
+
+Cette commande va générer le guide en français seulement.
+
+h2. Ajouter un HOWTO
+
+Tous les HOWTOs sont des pages autonomes dans le répertoire @src/$lang@. Pour ajouter le howto français 'Déployer sur JBoss', il vous faut donc créer le fichier 'src/deployerSurJboss.gdoc' et y ajouter le son contenu.
+
+Voici les seules exigences des fichiers gdoc :
+
+# La première ligne doit être un titre @h1.@, qui deviendra le titre du HOWTO; et
+# @h2.@ sera utilisé pour les sous-titres.
+
+Voici à quoi ressemble un gdoc :
+
+{code}
+\h1. Déployer sur JBoss
+
+Introduction au guide
+
+\h2. Avant de commencer
+
+...
+{code}
+
+Les liens entre les HOWTOs ne sont pas supportés pour l'instant, par contre la syntaxedes liens externes est la même que dans la [syntaxe standard de gdoc|http://grails.org/WikiSyntax]
+
+Une fois que vous aurez créé votre fichier gdoc, il sera automatiquement généré la prochaine vous que lancerez la commande @docs@. Le fichier HTML résultant aura le même nom que votre fichier gdoc, example : 'deployerSurJboss.html'.
+
+Si vous souhaitez ajouter une image à un HOWTO, placez le fichier dans le répertoire 'resources/img' et ajoutez le code \!<chemin de l'image>\! dans le code source de votre gdoc. Par exemple, si vous avez l'image 'resources/img/deployerSurJboss/cycle.png' alors le lien de l'image sera :
+
+bc.
+\!deployerSurJBoss/cycle.png\!
+
+NB: Le chemin entre les points exclamations est relatif au répertoire 'resources/img'.
+
+h2. Modifier le style
+
+La mise en forme HTML utilisé pour ce guide est défini dans le fichier 'resources/templates/how-to-template.html'. Les fichiers statiques requis pour le template, comme les images et le style css, devront être placés dans leur répertoire respectif soit 'resources/img', 'resources/css' et 'resources/js'.
+
+Lorsque vous ajoutez un lien à une ressource statique dans le template, assurez vous d'utiliser la variable @resourcesPath@ comme ceci :
+
+{code:xml}
+<link href="${resourcesPath}/css/main.css" type="text/css" ...>
+{code}
+
+De cette façon, le template fonctionnera peu importe si le guide généré pour pour une langue en particulier ou non.
+
+h2. Communauté
+
+Il s'agit d'un projet ouvert qui permet à tout le monde intéressé de contribuer. Par contre, il n'y a aucun contrôle éditoriale. On attend des contributeurs qu'ils autorégulent le système eux-même afin de prévenir les abus.
