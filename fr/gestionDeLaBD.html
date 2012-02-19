@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" type="text/css" href="../css/main.css" />
+        <link rel="shortcut icon" href="../img/favicon.ico" />
+        <script type="text/javascript" src="../js/jquery-1.7.1.min.js"></script>
+        <!--[if !IE]>-->
+        <style type="text/css">
+        body {
+            font-size:16px;
+        }
+        </style>
+        <!--<[endif]-->
+        <title>How To: Gestion de la base de donn&eacute;es</title>
+    </head>
+    <body>
+        <div id="header-container">
+            <div id="header">
+                <a href="http://grails.org"><img src="../img/grails.png" alt="GRAILS HOW-TOs" /></a>
+                <a id="all_links_toggler">Browse all How-Tos</a>
+                <div id="all_links">
+                    <a href="contributeToTheseGuides.html">Contribute to these guides</a>
+                    <a href="upgradeToGrails2.html">Upgrade to Grails 2</a>
+                    <a href="manageDatabases.html">Manage databases</a>
+                </div>
+            </div>
+        </div>
+        <div id="main-container">
+            <div id="toc">
+                <h3>Sections</h3>
+                <ol>
+                
+                    <li><a href="#s1">Réingénérie de la base de donnée</a></li>
+                
+                    <li><a href="#s2">Débuter avec la migration de données</a></li>
+                
+                    <li><a href="#s3">Trucs et astuces de migrations</a></li>
+                
+                </ol>
+            </div>
+
+            <div id="content"><h1>Gestion de la base de données</h1><p class="paragraph"/>Démarrer un nouveau projet avec grails est vraiment quelque chose de simple puisque vos modèles définissent le schéma de votre BD, vous n'avez donc pas à vous en occuper vous-même. Mais qu'arrive-t-il lorsque vous devez travailler avec une BD existante ? Dans ce cas, vous devrez mapper chaque propriété de vos modèles à la main. Cette tâche peut être plutôt longue si vous partez d'un schéma volumineux.<p class="paragraph"/>Ensuite, que se passera-t-il lorsque vous voudrez mettre à jour votre application ? Vous ne pourrez pas vous limiter au schéma initial sans quoi, votre application ne pourra évoluer adéquatement. Il vous faudra donc une solution pour migrer votre schema et votre base de donnée.<p class="paragraph"/>Heureusement, des plugins existents pour répondre à ces deux scénarii. Ce guide vous aidera tirer le maximum de ces plugins.<p class="paragraph"/><h2 id="s1">Réingénérie de la base de donnée</h2><p class="paragraph"/>TBC<p class="paragraph"/><h2 id="s2">Débuter avec la migration de données</h2><p class="paragraph"/>Le plugin de migration vous permettra de suivre les modifications faite à la structure de votre base de données. Les changements créés automatiquement par Grails deviennent visibles, suivables et peuvent être versionnés dans votre outil de contrôle des sources.<p class="paragraph"/>Dans cette section, nous allons vous accompagner dans une application simple utilisant le plugin de migration pour voir comment il fonctionne.<p class="paragraph"/><h3>Créer votre application et ajoutez un modèle</h3><p class="paragraph"/>Supposons que vous avez déjà Grails d'installé, ouvrez un terminal et écrivez :<p class="paragraph"/><div class="code"><pre>grails create&#45;app myApp
+cd myApp
+grails create&#45;domain&#45;class com.example.Book
+grails generate&#45;all <span class="java&#45;quote">"&#42;"</span></pre></div><p class="paragraph"/>Vous venez tout juste de créer une simple application Grails avec un modèle appelé Book. Vous avez aussi généré les vues pour cet objet.<p class="paragraph"/><h3>Installer le plugin</h3><p class="paragraph"/>Dans votre terminal, écrivez<p class="paragraph"/><div class="code"><pre>grails install&#45;plugin database&#45;migration</pre></div><p class="paragraph"/>Le plugin 'Database Migration' sera installé.<p class="paragraph"/><h3>Créer un changelog</h3><p class="paragraph"/>Ce plugin fait un suivi de tous les changements fait dans votre application via un changelog. Voyez le changelog comme un journal des changements effectués à votre BD tout au long du cycle de vie de votre application.<p class="paragraph"/>Dans un terminal, écrivez<p class="paragraph"/><div class="code"><pre>grails dbm&#45;generate&#45;changelog changelog.groovy</pre></div><p class="paragraph"/>Déplacez-vous dans le répertoire <code>grails-app/migrations/</code>, vous devriez y trouver le fichier <code>changelog.groovy</code>.<p class="paragraph"/>Ouvrez ce fichier, vous y verrez quelque chose comme ceci :<p class="paragraph"/><div class="code"><pre>databaseChangeLog = &#123;
+&#125;</pre></div><p class="paragraph"/>Rien de très passionnant, seulement un liste vide de changements.<p class="paragraph"/><h3>Capturer un changelog initiale de vos modèles</h3><p class="paragraph"/>Si vous retournez quelques paragraphes plus haut, vous verrez que nous avons créer un modèle Book. Comment l'ajouter au journal ?<p class="paragraph"/>Pour générer une copie de votre BD actuelle, vous devez appeler la commande <code>dbm-gorm-diff</code>. Cette commande va générer un nouveau fichier contenant les changements qui ne se trouvent pas de le changelog. Pensez à un mini commit avec git.<p class="paragraph"/>Vérifiez que vous êtes bien dans le répertoire racine de votre projet et lancez la commande suivante :<p class="paragraph"/><div class="code"><pre>grails dbm&#45;gorm&#45;diff 2012&#45;02&#45;01&#45;initial&#45;database.groovy &#45;&#45;add</pre></div><p class="paragraph"/>Le premier paramètre <code>2012-02-01-initial-database.groovy</code> est le nom du fichier qui contiendra les changements initial de la BD.<p class="paragraph"/>Notez que j'ai préfixé la date avec le nom du fichier. Cette ajout devient pratique lorsqu'on travaille avec d'autres membres d'une équipe afin de voir de façon séquentiel les changements effectués à la BD.<p class="paragraph"/>Le deuxième paramètre <code>add</code> indique au plugin d'ajouter la nouvelle migration dans la liste des migrations.<p class="paragraph"/>Ouvrez le répertoire <code>grails-app/migrations</code>. Vous devriez voir les deux fichiers suivants :<p class="paragraph"/><strong class="bold">changelog.groovy</strong>
+<div class="code"><pre>databaseChangeLog = &#123;<p class="paragraph"/>        include file: '2012&#45;02&#45;01&#45;initial&#45;database.groovy'
+&#125;</pre></div><p class="paragraph"/><strong class="bold">2012-02-01-initial-database.groovy</strong>
+<div class="code"><pre>databaseChangeLog = &#123;<p class="paragraph"/>        changeSet(author: <span class="java&#45;quote">"tomaslin (generated)"</span>, id: <span class="java&#45;quote">"1328137085507&#45;1"</span>) &#123;
+                createTable(tableName: <span class="java&#45;quote">"book"</span>) &#123;
+                        column(autoIncrement: <span class="java&#45;quote">"<span class="java&#45;keyword">true</span>"</span>, name: <span class="java&#45;quote">"id"</span>, type: <span class="java&#45;quote">"bigint"</span>) &#123;
+                                constraints(nullable: <span class="java&#45;quote">"<span class="java&#45;keyword">false</span>"</span>, primaryKey: <span class="java&#45;quote">"<span class="java&#45;keyword">true</span>"</span>, primaryKeyName: <span class="java&#45;quote">"bookPK"</span>)
+                        &#125;<p class="paragraph"/>                        column(name: <span class="java&#45;quote">"version"</span>, type: <span class="java&#45;quote">"bigint"</span>) &#123;
+                                constraints(nullable: <span class="java&#45;quote">"<span class="java&#45;keyword">false</span>"</span>)
+                        &#125;
+                &#125;
+        &#125;
+&#125;</pre></div><p class="paragraph"/>Comme vous pouvez le constater, un nouveau changelog a été généré avec votre BD initiale et a été inclu dans votre fichier de migration original.<p class="paragraph"/><h3>Désactiver la gestion automatique de la BD par Grails</h3><p class="paragraph"/>Par défaut, Grails est configuré pour gérer automatiquement votre BD. Cela marche bien en développement, mais en production, il vaut mieux utiliser le plugin de migration seulement.<p class="paragraph"/>Pour désactiver la mise à jour automatique des modèles par grails, ouvrez le fichier <code>grails-app/conf/DataSource.groovy</code> et supprimez les références à <code>dbCreate</code>.<p class="paragraph"/>Par exemple, votre environnement de développement ressemblait à ceci:<p class="paragraph"/><div class="code"><pre>development &#123;
+         dataSource &#123;
+              dbCreate = <span class="java&#45;quote">"create&#45;drop"</span> // one of 'create', 'create&#45;drop', 'update', 'validate', ''
+              url = <span class="java&#45;quote">"jdbc:h2:mem:devDb;MVCC=TRUE"</span>
+          &#125;
+      &#125;</pre></div><p class="paragraph"/>Maintenant, il doit plutôt être comme ceci :<p class="paragraph"/><div class="code"><pre>development &#123;
+         dataSource &#123;
+              url = <span class="java&#45;quote">"jdbc:h2:mem:devDb;MVCC=TRUE"</span>
+          &#125;
+      &#125;</pre></div><p class="paragraph"/>
+Pour que les migrations fonctionnent avec H2, vous devez utiliser une BD persistente.<p class="paragraph"/>Supprimer les lignes qui font référence à la BD en mémoire dans votre chaîne de connexion (ou changez pour mysql ou postgres). Pour se faire, supprimez <code>:mem:</code> dans l'url de votre datasource.<p class="paragraph"/>Votre environnement de développement final devrait ressembler à ceci:<p class="paragraph"/><div class="code"><pre>development &#123;
+         dataSource &#123;
+              url = <span class="java&#45;quote">"jdbc:h2:devDb;MVCC=TRUE"</span>
+          &#125;
+      &#125;</pre></div><p class="paragraph"/>NB : Cela va créer un fichier que h2 va utiliser comme BD. Assurez-vous de ne pas versionner ce fichier dans votre outil de contrôle des sources.<p class="paragraph"/><h3>Activer les migrations automatiques</h3><p class="paragraph"/>Mettez en marche votre application avec la commande <code>grails run-app</code>. Naviguez avec votre fureteur à la liste des Book via <code>http://localhost:8080/myApp/book/list</code><p class="paragraph"/>Oh non! Il y a une erreur car nous avons indiqué à Grails de ne pas effectuer automatiquement la mise à jour de la BD. Présentement, la table Book n'existe pas et nos clients aiguises leurs fourches. Pour corriger ce problème, nous devons activer la migration automatique au démarrage de l'application.<p class="paragraph"/>
+Ouvrez le fichier Config.groovy et ajoutez ceci :<p class="paragraph"/><div class="code"><pre>grails.plugin.databasemigration.updateOnStart = <span class="java&#45;keyword">true</span>
+grails.plugin.databasemigration.updateOnStartFileNames = &#91;'changelog.groovy'&#93;</pre></div><p class="paragraph"/>Ces lignes permettront à votre application de mettre à jour la BD avec vos migrations à chaque démarrage. Redémarrez votre application et redirigez à nouveau votre fureteur à l'url <code>http://localhost:8080/myApp/book/list</code>. Il ne devrait plus y avoir d'erreur - vos clients mettent de côté leurs fourches aiguisées.<p class="paragraph"/><h3>Ajouter et suivre les changements</h3><p class="paragraph"/>Maintenant que vous avez une copie de votre BD initial et votre application Grails se met à jour automatiquement avec les plus récentes modifications du schéma, ajoutons quelques scénarii qui ont besoin de migrations de la BD pour voir ce qui arrivera.<p class="paragraph"/>Ouvrez le fichier <code>grails-app/domain/com/example/Book.groovy</code><p class="paragraph"/>Ajoutez les propriétés suivantes :<p class="paragraph"/><div class="code"><pre><span class="java&#45;object">String</span> name
+	<span class="java&#45;object">String</span> backCover
+	Date publicationDate</pre></div><p class="paragraph"/>Votre modèle devrait maintenant ressembler à ceci :<p class="paragraph"/><div class="code"><pre><span class="java&#45;keyword">package</span> com.example<p class="paragraph"/>class Book &#123;<p class="paragraph"/>	<span class="java&#45;object">String</span> name
+	<span class="java&#45;object">String</span> backCover
+	Date publicationDate<p class="paragraph"/>    <span class="java&#45;keyword">static</span> constraints = &#123;
+    &#125;
+&#125;</pre></div><p class="paragraph"/>Ouvrez votre terminal et ajouter une migration<p class="paragraph"/><div class="code"><pre>grails dbm&#45;update
+grails dbm&#45;gorm&#45;diff 2012&#45;02&#45;01&#45;added&#45;<span class="java&#45;keyword">new</span>&#45;fields&#45;to&#45;book.groovy &#45;&#45;add</pre></div><p class="paragraph"/>Il y a une nouvelle commande, <code>dbm-update</code>. Dbm-update indique à l'application Grails de se mettre à jour avec la plus récente version de la BD. Vous <strong class="bold">DEVEZ ABSOLUMENT</strong> exécuter cette commande avant de créer une nouvelle migration afin de s'assurer que toutes vos modifications ont été appliqués avant d'en faire une migration.<p class="paragraph"/>Ouvrez le fichier <code>grails-app/migrations/2012-02-01-added-new-fields-to-book.groovy</code><p class="paragraph"/>Vous devriez voir quelque chose comme:<p class="paragraph"/><div class="code"><pre>databaseChangeLog = &#123;<p class="paragraph"/>	changeSet(author: <span class="java&#45;quote">"tomaslin (generated)"</span>, id: <span class="java&#45;quote">"1328139836195&#45;1"</span>) &#123;
+		addColumn(tableName: <span class="java&#45;quote">"book"</span>) &#123;
+			column(name: <span class="java&#45;quote">"back_cover"</span>, type: <span class="java&#45;quote">"varchar(255)"</span>) &#123;
+				constraints(nullable: <span class="java&#45;quote">"<span class="java&#45;keyword">false</span>"</span>)
+			&#125;
+		&#125;
+	&#125;<p class="paragraph"/>	changeSet(author: <span class="java&#45;quote">"tomaslin (generated)"</span>, id: <span class="java&#45;quote">"1328139836195&#45;2"</span>) &#123;
+		addColumn(tableName: <span class="java&#45;quote">"book"</span>) &#123;
+			column(name: <span class="java&#45;quote">"name"</span>, type: <span class="java&#45;quote">"varchar(255)"</span>) &#123;
+				constraints(nullable: <span class="java&#45;quote">"<span class="java&#45;keyword">false</span>"</span>)
+			&#125;
+		&#125;
+	&#125;<p class="paragraph"/>	changeSet(author: <span class="java&#45;quote">"tomaslin (generated)"</span>, id: <span class="java&#45;quote">"1328139836195&#45;4"</span>) &#123;
+		addColumn(tableName: <span class="java&#45;quote">"book"</span>) &#123;
+			column(name: <span class="java&#45;quote">"publication_date"</span>, type: <span class="java&#45;quote">"timestamp"</span>) &#123;
+				constraints(nullable: <span class="java&#45;quote">"<span class="java&#45;keyword">false</span>"</span>)
+			&#125;
+		&#125;
+	&#125;
+&#125;</pre></div><p class="paragraph"/>Comme vous pouvez le constater, le plugin de migration a créé plusieurs changements qui suivent les colonnes qui doivent être ajoutée à cause des nouvelles propriétés du modèle Book.<p class="paragraph"/>Regardez le fichier changelog.groovy<p class="paragraph"/><div class="code"><pre>databaseChangeLog = &#123;<p class="paragraph"/>        include file: '2012&#45;02&#45;01&#45;initial&#45;database.groovy'<p class="paragraph"/>        include file: '2012&#45;02&#45;01&#45;added&#45;<span class="java&#45;keyword">new</span>&#45;fields&#45;to&#45;book.groovy'
+&#125;</pre></div><p class="paragraph"/>La nouvelle migration a été ajouté après la migration initiale. L'ordre des fichiers dans le changelog permet de suivre l'ordre d'exécution de chaque migration.<p class="paragraph"/>Mais attendez un instant, qu'arrive-t-il si nous changeons notre modèle ? Supposons que nous voulons utiliser un champs TEXT au lieu de VARCHAR.<p class="paragraph"/>Ajoutons le 'mapping' pour le 'bookCover':<p class="paragraph"/><div class="code"><pre><span class="java&#45;keyword">static</span> mapping = &#123;
+	backCover sqlType: 'text'
+&#125;</pre></div><p class="paragraph"/>Notre nouveau modèle ressemble à ceci :<p class="paragraph"/><div class="code"><pre><span class="java&#45;keyword">package</span> com.example<p class="paragraph"/>class Book &#123;<p class="paragraph"/>	<span class="java&#45;object">String</span> name
+	<span class="java&#45;object">String</span> backCover
+	Date publicationDate<p class="paragraph"/>    <span class="java&#45;keyword">static</span> constraints = &#123;
+    &#125;<p class="paragraph"/>	<span class="java&#45;keyword">static</span> mapping = &#123;
+		backCover sqlType: 'text'
+	&#125;
+&#125;</pre></div><p class="paragraph"/>Exécutez une nouvelle migration pour voir ce qui arrive<p class="paragraph"/><div class="code"><pre>grails dbm&#45;update
+grails dbm&#45;gorm&#45;diff 2012&#45;02&#45;01&#45;changed&#45;property&#45;types.groovy &#45;&#45;add</pre></div><p class="paragraph"/>Vous pouvez voir qu'une nouvelle migration a été créé afin de modifier la table.<p class="paragraph"/><div class="code"><pre>changeSet(author: <span class="java&#45;quote">"tomaslin (generated)"</span>, id: <span class="java&#45;quote">"1328141759596&#45;1"</span>) &#123;
+	modifyDataType(columnName: <span class="java&#45;quote">"BACK_COVER"</span>, newDataType: <span class="java&#45;quote">"text(255)"</span>, tableName: <span class="java&#45;quote">"BOOK"</span>)
+&#125;</pre></div><p class="paragraph"/>En continuant votre développement, continuez d'utiliser le mécanisme de dbm-gorm-diff pour garder un suivi de vos changements. Et c'est terminé!<p class="paragraph"/><h3>Credits supplémentaires</h3>
+<ul class="star">
+<li>Ajoutez d'autres modèles et observez les répercussions sur les mappings. Qu'arrive-t-il aux migrations ?</li>
+<li>Supprimez une propriété d'une modèle - comment la migration réflète-t-elle ce changement ?</li>
+<li>Modifiez votre base de donnée de développement depuis H2 à MySQL et relancez la migration. Est-ce que tout se passe bien ?</li>
+</ul><p class="paragraph"/><h2 id="s3">Trucs et astuces de migrations</h2><p class="paragraph"/><h3>Assurez vous d'enregistrer vos migrations</h3><p class="paragraph"/>Un des problèmes d'utilisation des outils Grails est que, la plupart du temps, les migrations sont oubliées sur le bureau des développeurs. N'oubliez pas d'enregistrer vos migrations après les avoir créées.<p class="paragraph"/><h3>Prévisualiser les migrations</h3><p class="paragraph"/>Si vous ne spécifiez pas l'option <code>add</code> à la commande <code>dbm-gorm-diff</code>, vous pourrez voir la migration directement dans votre console.<p class="paragraph"/><h3>Toujours réviser vos migrations</h3><p class="paragraph"/>Une bonne pratique est d'inspecter visuellement et d'exécuter <code>dbm-update</code> après chaque nouvelle migration pour voir si rien n'est brisé. Si vous utilisez d'autres dialectes d'hibernate, il est possible de vous ramasser avec plusieurs index et clé étrangères complètement inutiles.<p class="paragraph"/><h3>Réinitialiser les verrous</h3><p class="paragraph"/>Il arrive parfois que votre application bloque à cause de quelque chose qui à verrouillé le changelog de la BD et qui n'est plus en cours d'exécution. Votre application bloquera au démarrage car elle ne peut pas acquérir le verrou. Pour réinitialiser le verrou manuellement, entrez la commande SQL suivante :<p class="paragraph"/><div class="code"><pre>update DATABASECHANGELOGLOCK set LOCKED=0, LOCKGRANTED=<span class="java&#45;keyword">null</span>, LOCKEDBY=<span class="java&#45;keyword">null</span></pre></div><p class="paragraph"/><h3>Ne modifiez jamais une migration, jamais!</h3><p class="paragraph"/>Le plugin de migration effectue un checksum pour chaque migration appliquée. Si vous regarder dans votre BD, vous verrez une table appelée DATABASECHANGELOG contenant les migrations antérieures.<p class="paragraph"/>Si vous modifiez accidentellement une migration, pendant un refactoring par exemple, ces checksums ne correpsonderont plus aux migrations et le plugin va tout casser!<p class="paragraph"/>Pour corriger ce problème, vous devrez réinitialiser les checksums de la BD. Pour se faire, utilisez la commande suivante :<p class="paragraph"/><div class="code"><pre>grails dbm&#45;clear&#45;checksums</pre></div><p class="paragraph"/><h3>Vous pouvez utiliser SQL pour assigner des valeurs par défaut au nouvelles colonnes</h3><p class="paragraph"/>Une autre commande pratique supporté par le plugin de migration est la commande <code>sql()</code>. Cette commande permet d'exécuter des commandes SQL directement dans votre migration. Si vous ajouter des nouvelles colonnes et que vous souhaitez y insérer une valeur, vous pouvez le faire en modifiant le changeset. Comme ceci<p class="paragraph"/><div class="code"><pre>changeSet(author: <span class="java&#45;quote">"tomaslin (generated)"</span>, id: <span class="java&#45;quote">"1328139836195&#45;4"</span>) &#123;
+	addColumn(tableName: <span class="java&#45;quote">"book"</span>) &#123;
+		column(name: <span class="java&#45;quote">"back_cover"</span>, type: <span class="java&#45;quote">"varchar(255)"</span>) &#123;
+			constraints(nullable: <span class="java&#45;quote">"<span class="java&#45;keyword">false</span>"</span>)
+		&#125;
+	&#125;
+	sql(''' update book set back_cover = 'Not available' ''' )
+&#125;</pre></div><p class="paragraph"/><h3>Vous pouvez utiliser vos propres changesets dans groovy, mais n'utilisez pas vos modèles dedans</h3><p class="paragraph"/>Le plugin inclue un type de migration intéressant appellé <code>grailsChange</code>. GrailsChange vous permet d'écrire vos propres changements en groovy. Cependant, sachez qu'utiliser vos modèles dans ces migrations n'est pas sécuritaire du tout car le modèle utilisé dans le temps de l'écriture d'une migration peut être différent que celui à son exécution.<p class="paragraph"/><h3>Pour des changements plus complexe, utilisez <code>dbm-diff</code> pour comparer des BD</h3><p class="paragraph"/>Si vous souhaitez comparer deux version diffrentes d'une BD, utilisez cette commande :<p class="paragraph"/><div class="code"><pre>grails dbm&#45;diff databaseToCompareTo 2012&#45;02&#45;01&#45;database&#45;dif.groovy &#45;&#45;add</pre></div><p class="paragraph"/><h3>Seulement 'compile' peut résoudre 'Unable to resolve class errors'</h3><p class="paragraph"/>Si vous essayez de générer votre changelog pour la première fois, il se peut que vous rencontrez cette erreur:<p class="paragraph"/><div class="code"><pre>| Configuring classpath
+| Error Error executing script DbmGenerateGormChangelog: startup failed:
+_DatabaseMigrationCommon_groovy: 28: unable to resolve class org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsAnnotationConfiguration
+  line 28, column 1.</pre></div><p class="paragraph"/>Pour corriger ce problème, exécutez <code>grails compile</code> avant de générer le changelog et ainsi, ensuite, la migration fonctionnera proprement.
+</div>
+        </div>
+        <script type="text/javascript" src="../js/application.js"></script>
+    </body>
+</html>
