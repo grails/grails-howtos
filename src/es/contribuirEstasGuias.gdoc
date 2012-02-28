@@ -1,0 +1,75 @@
+h1. Contribuir a estas guías
+
+Estas guías HOWTO se construyen desde un proyecto alojado en GitHub al que cualquiera puede contribuir. Las contribuciones pueden ser modificaciones de las guías existentes, la adición de otras nuevas, o cambios en el estilo de los HOWTOs publicados.
+
+Si quieres contribuir, envía un mensaje interno de GitHub a 'pledbrook' solicitando acceso de commit. No es evidente cómo hacer esto en GitHub, pero, básicamente, hay que hacer clic en el enlace "Compose Message" en su página de notificaciones:
+
+!contributeToTheseGuides/compose_link.png!
+
+y luego añadir 'pledbrook' en el campo de destinatario:
+
+!contributeToTheseGuides/message.png!
+
+Una vez que se le haya concedido el acceso, serás capaz de hacer commit directamente en el repositorio del proyecto: https://github.com/grails/grails-howtos.
+
+h2. La construcción de las guías
+
+Una vez que has clonado el repositorios a nivel local, todo lo que tienes que hacer es ejecutar
+
+bc.
+./gradlew docs
+
+en la raíz del proyecto. Esto va a generar todas las guías HOWTO en todas las lenguas dentro del directorio @build/docs@. Si quieres generar sólo las guías para un idioma en particular, sólo tiene que añadir el sufijo idioma. Por ejemplo,
+
+bc.
+./gradlew docs_fr
+
+va a generar las guías HOWTO en frances, pero no las demás.
+
+h2. Creación de un HOWTO
+
+Todos los guías son independientes de los archivos gdoc que residen en el directorio @src/$lang@. Por lo tanto, para agregar un HOWTO "Desplegar en JBoss en Español", simplemente crea el archivo 'src/es/desplegarEnJboss.gdoc' y añade el contenido HOWTO a ella.
+
+Los únicos requisitos para cada archivo gdoc son las siguientes:
+
+# La primera línea es una cabecera  @h1.@, que se convierte en el título del HOWTO; y 
+# @h2.@ se utiliza para las secciones de nivel superior.
+
+Por ejemplo, un gdoc muy básico sería así:
+
+{code}
+\h1. Desplegar en JBoss
+
+Introducción a esta guía
+
+\h2. Conceptos básicos
+
+...
+{code}
+
+Los enlaces entre HOWTOs no están soportados, pero los enlaces externos se ponen igual que con la [sintaxis gdoc estandar|http://grails.org/WikiSyntax].
+
+Tan pronto como se crea el archivo gdoc, será introducido en la documentación en la construcción la próxima vez que ejecute la tarea de @docs@. El archivo HTML resultante tendrá el mismo nombre que el archivo gdoc, por ejemplo 'desplegarEnJboss.html'.
+
+Si desea agregar una imagen a un HOWTO, coloque el archivo en el directorio "resources/img 'e inserte una entrada como \! <ruta Imagen> \! en el fuente del gdoc. Por ejemplo, si tienes la imagen "resources/img/desplegarEnJboss/cicloDeDespliege.png"" puedes enlazar a ella usando esta sintaxis:
+
+bc.
+\!DeployToJboss/deployCycle.png\!
+
+Ten en cuenta que la ruta especificada dentro de los signos de exclamación es relativa al directorio 'resources/img'.
+
+h2. Personalizar el estilo
+
+El diseño HTML para la guía HOWTO se define en el archivo 'resources/templates/how-to-template.html'. Los recursos estáticos requeridos por la plantilla, como imágenes y hojas de estilo, se debe colocar en el directorio correspondiente bajo 'resources/img', 'resources/css' y 'resources/js' según proceda.
+
+Al añadir enlaces a recursos estáticos dentro de la plantilla, asegúrate de utilizar la variable @resourcesPath@ así:
+
+{code:xml}
+<link href="${resourcesPath}/css/main.css" type="text/css" ...>
+{code}
+
+Esto asegura que la plantilla funciona independientemente de si la guía está generada en un directorio específico para el lenguaje o no.
+
+h2. Comunidad
+
+Esto es un repositorio abierto que permite a cualquiera que esté interesado contribuir. Por otro lado, no existe un control editorial central, por lo se espera que los contribuyentes controlen ellos mismos el sistema para evitar abusos.
