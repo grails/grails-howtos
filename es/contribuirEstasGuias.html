@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" type="text/css" href="../css/main.css" />
+        <link rel="shortcut icon" href="../img/favicon.ico" />
+        <script type="text/javascript" src="../js/jquery-1.7.1.min.js"></script>
+        <!--[if !IE]>-->
+        <style type="text/css">
+        body {
+            font-size:16px;
+        }
+        </style>
+        <!--<[endif]-->
+        <title>How To: Contribuir a estas gu&iacute;as</title>
+    </head>
+    <body>
+        <div id="header-container">
+            <div id="header">
+                <a href="http://grails.org"><img src="../img/grails.png" alt="GRAILS HOW-TOs" /></a>
+                <a id="all_links_toggler">Browse all How-Tos</a>
+                <div id="all_links">
+                    
+                    <a href="contribuirEstasGuias.html">Contribuir a estas gu&iacute;as</a>
+                    
+                </div>
+            </div>
+        </div>
+        <div id="main-container">
+            <div id="toc">
+                <h3>Sections</h3>
+                <ol>
+                
+                    <li><a href="#s1">La construcción de las guías</a></li>
+                
+                    <li><a href="#s2">Creación de un HOWTO</a></li>
+                
+                    <li><a href="#s3">Personalizar el estilo</a></li>
+                
+                    <li><a href="#s4">Comunidad</a></li>
+                
+                </ol>
+            </div>
+
+            <div id="content"><h1>Contribuir a estas guías</h1><p class="paragraph"/>Estas guías HOWTO se construyen desde un proyecto alojado en GitHub al que cualquiera puede contribuir. Las contribuciones pueden ser modificaciones de las guías existentes, la adición de otras nuevas, o cambios en el estilo de los HOWTOs publicados.<p class="paragraph"/>Si quieres contribuir, envía un mensaje interno de GitHub a 'pledbrook' solicitando acceso de commit. No es evidente cómo hacer esto en GitHub, pero, básicamente, hay que hacer clic en el enlace "Compose Message" en su página de notificaciones:<p class="paragraph"/><img border="0" class="center" src="../img/contributeToTheseGuides/compose_link.png"></img><p class="paragraph"/>y luego añadir 'pledbrook' en el campo de destinatario:<p class="paragraph"/><img border="0" class="center" src="../img/contributeToTheseGuides/message.png"></img><p class="paragraph"/>Una vez que se le haya concedido el acceso, serás capaz de hacer commit directamente en el repositorio del proyecto: https://github.com/grails/grails-howtos.<p class="paragraph"/><h2 id="s1">La construcción de las guías</h2><p class="paragraph"/>Una vez que has clonado el repositorios a nivel local, todo lo que tienes que hacer es ejecutar<p class="paragraph"/><pre class="bq"><code>
+./gradlew docs</code></pre><p class="paragraph"/>en la raíz del proyecto. Esto va a generar todas las guías HOWTO en todas las lenguas dentro del directorio <code>build/docs</code>. Si quieres generar sólo las guías para un idioma en particular, sólo tiene que añadir el sufijo idioma. Por ejemplo,<p class="paragraph"/><pre class="bq"><code>
+./gradlew docs_fr</code></pre><p class="paragraph"/>va a generar las guías HOWTO en frances, pero no las demás.<p class="paragraph"/><h2 id="s2">Creación de un HOWTO</h2><p class="paragraph"/>Todos los guías son independientes de los archivos gdoc que residen en el directorio <code>src/$lang</code>. Por lo tanto, para agregar un HOWTO "Desplegar en JBoss en Español", simplemente crea el archivo 'src/es/desplegarEnJboss.gdoc' y añade el contenido HOWTO a ella.<p class="paragraph"/>Los únicos requisitos para cada archivo gdoc son las siguientes:
+<ol>
+<li>La primera línea es una cabecera  <code>h1.</code>, que se convierte en el título del HOWTO; y</li>
+<li><code>h2.</code> se utiliza para las secciones de nivel superior.</li>
+</ol><p class="paragraph"/>Por ejemplo, un gdoc muy básico sería así:<p class="paragraph"/><div class="code"><pre>&#104;1. Desplegar en JBoss<p class="paragraph"/>Introducción a esta guía<p class="paragraph"/>&#104;2. Conceptos básicos<p class="paragraph"/>...</pre></div><p class="paragraph"/>Los enlaces entre HOWTOs no están soportados, pero los enlaces externos se ponen igual que con la <a href="http://grails.org/WikiSyntax" target="blank">sintaxis gdoc estandar</a>.<p class="paragraph"/>Tan pronto como se crea el archivo gdoc, será introducido en la documentación en la construcción la próxima vez que ejecute la tarea de <code>docs</code>. El archivo HTML resultante tendrá el mismo nombre que el archivo gdoc, por ejemplo 'desplegarEnJboss.html'.<p class="paragraph"/>Si desea agregar una imagen a un HOWTO, coloque el archivo en el directorio "resources/img 'e inserte una entrada como &#33; &#60;ruta Imagen&#62; &#33; en el fuente del gdoc. Por ejemplo, si tienes la imagen "resources/img/desplegarEnJboss/cicloDeDespliege.png"" puedes enlazar a ella usando esta sintaxis:<p class="paragraph"/><pre class="bq"><code>
+&#33;DeployToJboss/deployCycle.png&#33;</code></pre><p class="paragraph"/>Ten en cuenta que la ruta especificada dentro de los signos de exclamación es relativa al directorio 'resources/img'.<p class="paragraph"/><h2 id="s3">Personalizar el estilo</h2><p class="paragraph"/>El diseño HTML para la guía HOWTO se define en el archivo 'resources/templates/how-to-template.html'. Los recursos estáticos requeridos por la plantilla, como imágenes y hojas de estilo, se debe colocar en el directorio correspondiente bajo 'resources/img', 'resources/css' y 'resources/js' según proceda.<p class="paragraph"/>Al añadir enlaces a recursos estáticos dentro de la plantilla, asegúrate de utilizar la variable <code>resourcesPath</code> así:<p class="paragraph"/><div class="code"><pre><span class="xml&#45;tag">&#60;link href=<span class="xml&#45;quote">"$&#123;resourcesPath&#125;/css/main.css"</span> type=<span class="xml&#45;quote">"text/css"</span> ...&#62;</span></pre></div><p class="paragraph"/>Esto asegura que la plantilla funciona independientemente de si la guía está generada en un directorio específico para el lenguaje o no.<p class="paragraph"/><h2 id="s4">Comunidad</h2><p class="paragraph"/>Esto es un repositorio abierto que permite a cualquiera que esté interesado contribuir. Por otro lado, no existe un control editorial central, por lo se espera que los contribuyentes controlen ellos mismos el sistema para evitar abusos.</div>
+        </div>
+        <script type="text/javascript" src="../js/application.js"></script>
+    </body>
+</html>
