@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" type="text/css" href="../css/main.css" />
+        <link rel="shortcut icon" href="../img/favicon.ico" />
+        <script type="text/javascript" src="../js/jquery-1.7.1.min.js"></script>
+        <!--[if !IE]>-->
+        <style type="text/css">
+        body {
+            font-size:16px;
+        }
+        </style>
+        <!--<[endif]-->
+        <title>How To: How to migrate to the new Grails Central repository</title>
+    </head>
+    <body>
+        <div id="header-container">
+            <div id="header">
+                <a href="http://grails.org"><img src="../img/grails.png" alt="GRAILS HOW-TOs" /></a>
+                <a id="all_links_toggler">Browse all How-Tos</a>
+                <div id="all_links">
+                    
+                    <a href="migrateToTheNewCentralRepository.html">How to migrate to the new Grails Central repository</a>
+                    
+                    <a href="upgradeToGrails2.html">Upgrade to Grails 2</a>
+                    
+                    <a href="contributeToTheseGuides.html">Contribute to these guides</a>
+                    
+                    <a href="manageDatabases.html">Manage databases</a>
+                    
+                </div>
+            </div>
+        </div>
+        <div id="main-container">
+            <div id="toc">
+                <h3>Sections</h3>
+                <ol>
+                
+                    <li><a href="#s1">First Steps</a></li>
+                
+                    <li><a href="#s2">Moving your code to another hosting provider</a></li>
+                
+                    <li><a href="#s3">Upgrading the Release plugin</a></li>
+                
+                    <li><a href="#s4">Configuration</a></li>
+                
+                    <li><a href="#s5">Publishing</a></li>
+                
+                </ol>
+            </div>
+
+            <div id="content"><h1>How to migrate to the new Grails Central repository</h1><p class="paragraph"/>In March 2012 Grails migrated from a custom SVN based repository for plugins, to one based on Artifactory. The benefits of doing so are as follows:
+<ul class="star">
+<li>Publishing control - Each plugin developer can only publish the plugins they are responsible for</li>
+<li>Maven compatibility - Maven, Gradle and other build tools can more easily resolve plugins</li>
+<li>Performance - Resolves speeds can be made to increase by providing better metadata</li>
+</ul><p class="paragraph"/>This HOWTO is for plugin developers who would like to know the steps necessary to move to the new plugin repository.<p class="paragraph"/><h2 id="s1">First Steps</h2><p class="paragraph"/>In order to publish to the new repository you need to send an email to the <a href="http://grails.org/Mailing+lists" target="blank">Grails developer list</a> containing your Grails.org username and the plugins you wish to publish.<p class="paragraph"/><h2 id="s2">Moving your code to another hosting provider</h2><p class="paragraph"/>Since the old SVN repository will be read-only we encourage folks to move their plugins to alternative hosting providers. Github is a great option, see the details describing how to <a href="http://help.github.com/create-a-repo/" target="blank">create a repo</a><p class="paragraph"/><h2 id="s3">Upgrading the Release plugin</h2><p class="paragraph"/>Next you need to make sure you are using 2.0.0 or above of the <a href="http://grails.org/plugin/release" target="blank">Release plugin</a> to publish plugins (if 2.0.0 has not been released yes try 2.0.0.BUILD-SNAPSHOT).<p class="paragraph"/><blockquote class="warning">
+The old <code>release-plugin</code> command that ships with the Grails 1.x line will no longer work! You must use the new release plugin.
+</blockquote><p class="paragraph"/>This can be achieved by adding the Grails central repository to your BuildConfig.groovy respositories:<p class="paragraph"/><div class="code"><pre>grailsRepo <span class="java&#45;quote">"http://grails.org/plugins"</span></pre></div><p class="paragraph"/>And then running install-plugin:<p class="paragraph"/><div class="code"><pre>grails install&#45;plugin release 2.0.0.BUILD&#45;SNAPSHOT</pre></div><p class="paragraph"/><h2 id="s4">Configuration</h2><p class="paragraph"/>In order to publish to the central repository you need to configure your grails.org credentials in <code>~/.grails/settings.groovy</code> as follows:<p class="paragraph"/><div class="code"><pre>grails.project.repos.grailsCentral.username='YOUR USERNAME'
+grails.project.repos.grailsCentral.password='YOUR PASSWORD'</pre></div><p class="paragraph"/><h2 id="s5">Publishing</h2><p class="paragraph"/>To publish a plugin simply run <code>publish-plugin</code> command as usual:<p class="paragraph"/><div class="code"><pre>grails publish&#45;plugin</pre></div>
+</div>
+        </div>
+        <script type="text/javascript" src="../js/application.js"></script>
+    </body>
+</html>
