@@ -1,0 +1,54 @@
+h1. How to migrate to the new Grails Central repository
+
+In March 2012 Grails migrated from a custom SVN based repository for plugins, to one based on Artifactory. The benefits of doing so are as follows:
+
+* Publishing control - Each plugin developer can only publish the plugins they are responsible for
+* Maven compatibility - Maven, Gradle and other build tools can more easily resolve plugins
+* Performance - Resolves speeds can be made to increase by providing better metadata
+
+This HOWTO is for plugin developers who would like to know the steps necessary to move to the new plugin repository.
+
+h2. First Steps
+
+In order to publish to the new repository you need to send an email to the [Grails developer list|http://grails.org/Mailing+lists] containing your Grails.org username and the plugins you wish to publish. 
+
+h2. Moving your code to another hosting provider
+
+Since the old SVN repository will be read-only we encourage folks to move their plugins to alternative hosting providers. Github is a great option, see the details describing how to [create a repo|http://help.github.com/create-a-repo/]
+
+h2. Upgrading the Release plugin
+
+Next you need to make sure you are using 2.0.0 or above of the [Release plugin|http://grails.org/plugin/release] to publish plugins (if 2.0.0 has not been released yes try 2.0.0.BUILD-SNAPSHOT). 
+
+{warning}
+The old @release-plugin@ command that ships with the Grails 1.x line will no longer work! You must use the new release plugin.
+{warning}
+
+This can be achieved by adding the Grails central repository to your BuildConfig.groovy respositories:
+
+{code}
+    grailsRepo "http://grails.org/plugins"
+{code}
+
+And then running install-plugin:
+
+{code}
+grails install-plugin release 2.0.0.BUILD-SNAPSHOT
+{code}
+
+h2. Configuration
+
+In order to publish to the central repository you need to configure your grails.org credentials in @~/.grails/settings.groovy@ as follows:
+
+{code}
+grails.project.repos.grailsCentral.username='YOUR USERNAME'
+grails.project.repos.grailsCentral.password='YOUR PASSWORD'
+{code}
+
+h2. Publishing
+
+To publish a plugin simply run @publish-plugin@ command as usual:
+
+{code}
+grails publish-plugin
+{code}
