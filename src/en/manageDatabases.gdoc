@@ -286,7 +286,7 @@ One of the issues with using the Grails tools is that very often, migrations are
 
 h3. You can preview changelogs and changesets
 
-If you don't specify the @add@ parameter in dbm-gorm-diff, the result of the migration will appear in your console window. 
+If you don't specify the @add@ parameter in dbm-gorm-diff, the result of the migration will appear in the specified file, but not be added to the main changelog file. If you simply wish to view what changes would be made, run the diff script with no parameters at all, but beware that this can only produce XML output, as it only triggers groovy DSL format when it detects a file that ends in .groovy.
 
 h3. Always check your migrations
 
