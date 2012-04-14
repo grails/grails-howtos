@@ -18,7 +18,7 @@ Since the old SVN repository will be read-only we encourage folks to move their 
 
 h2. Upgrading the Release plugin
 
-Next you need to make sure you are using 2.0.0 or above of the [Release plugin|http://grails.org/plugin/release] to publish plugins (if 2.0.0 has not been released yes try 2.0.0.BUILD-SNAPSHOT). 
+Next you need to make sure you are using 2.0.0 or above of the [Release plugin|http://grails.org/plugin/release] to publish plugins.
 
 {warning}
 The old @release-plugin@ command that ships with the Grails 1.x line will no longer work! You must use the new release plugin.
@@ -27,13 +27,27 @@ The old @release-plugin@ command that ships with the Grails 1.x line will no lon
 This can be achieved by adding the Grails central repository to your BuildConfig.groovy respositories:
 
 {code}
-    grailsRepo "http://grails.org/plugins"
+grailsRepo "http://grails.org/plugins"
 {code}
 
 And then running install-plugin:
 
 {code}
-grails install-plugin release 2.0.0.BUILD-SNAPSHOT
+grails install-plugin release 2.0.0
+{code}
+
+or add it as a build dependency in @grails-app/conf/BuildConfig.groovy@:
+
+{code}
+grails.project.dependency.resolution = {
+    ...
+    plugins {
+        build ":release:2.0.0", {
+            export = false
+        }
+        ...
+    }
+}
 {code}
 
 h2. Configuration
