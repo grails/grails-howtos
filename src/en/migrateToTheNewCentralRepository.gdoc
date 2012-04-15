@@ -42,7 +42,7 @@ or add it as a build dependency in @grails-app/conf/BuildConfig.groovy@:
 grails.project.dependency.resolution = {
     ...
     plugins {
-        build ":release:2.0.0", {
+        build "\:release\:2.0.0", {
             export = false
         }
         ...
