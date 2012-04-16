@@ -60,7 +60,7 @@ The old <code>release-plugin</code> command that ships with the Grails 1.x line 
 </blockquote><p class="paragraph"/>This can be achieved by adding the Grails central repository to your BuildConfig.groovy respositories:<p class="paragraph"/><div class="code"><pre>grailsRepo <span class="java&#45;quote">"http://grails.org/plugins"</span></pre></div><p class="paragraph"/>And then running install-plugin:<p class="paragraph"/><div class="code"><pre>grails install&#45;plugin release 2.0.0</pre></div><p class="paragraph"/>or add it as a build dependency in <code>grails-app/conf/BuildConfig.groovy</code>:<p class="paragraph"/><div class="code"><pre>grails.project.dependency.resolution = &#123;
     &#8230;
     plugins &#123;
-        build <span class="java&#45;quote<a href="release:2.0.0"</span>,">></a> &#123;
+        build <span class="java&#45;quote">"&#58;release&#58;2.0.0"</span>, &#123;
             export = <span class="java&#45;keyword">false</span>
         &#125;
         &#8230;
