@@ -12,7 +12,7 @@ h3. Disable Open Session In View filter
 
 A standard Grails application with the Hibernate plugin installed has a special request interceptor enabled that opens a Hibernate session for every request and keeps it open until the view is rendered. This is convenient for the developer but acts as a drag on the number of concurrent requests that can be processed as each Hibernate session fetches a database connection.
 
-The simplest way to disable the filter is to remove the Hibernate plugin. Of course, this isn't ideal if you actually use GORM/Hibernate! The alternative is to write a no-op interceptor and configure it as the `openSessionInViewInterceptor` bean in `resources.groovy`. [TODO Add code for no-op interceptor]
+The simplest way to disable the filter is to remove the Hibernate plugin. Of course, this isn't ideal if you actually use GORM/Hibernate! The alternative is to write a no-op interceptor and configure it as the @openSessionInViewInterceptor@ bean in @resources.groovy@. [TODO Add code for no-op interceptor]
 
 Be warned that if you disable the interceptor, the standard Grails scaffolding will break and you will also need to ensure that you manage the sessions yourself. Fortunately, if you perform all database access through transactional services, you're already covered. Still, even then you will need to make sure that any collections you access from your views are eagerly loaded.
 
@@ -22,20 +22,24 @@ As soon as you use flash scope, Grails creates an HTTP session. The lifetime of 
 
 One 'fix' is to reduce the session timeout to something much lower. You can do this by running
 
-    grails install-templates
+{code}
+grails install-templates
+{code}
 
-and then editing `src/templates/war/web.xml`:
+and then editing @src/templates/war/web.xml@:
 
-    <session-config>
-        <!-- 1 minute timeout for benchmarking -->
-        <session-timeout>1</session-timeout> 
-    </session-config>
+{code:xml}
+<session-config>
+    <!-- 1 minute timeout for benchmarking -->
+    <session-timeout>1</session-timeout> 
+</session-config>
+{code}
 
 This isn't ideal though if you want users to log in and not have to log in every minute! In such cases, you should probably avoid using flash in pages that don't require a logged in user.
 
 h3. XML and JSON rendering
 
-The markup builder syntax for generating XML responses is very convenient. But it's not terribly fast. The same goes for JSON. If you discover that the rendering time is proving a bottleneck, first try the `as XML` and `as JSON` feature. If you still need improvements, consider using alternative libraries such as Jackson for JSON.
+The markup builder syntax for generating XML responses is very convenient. But it's not terribly fast. The same goes for JSON. If you discover that the rendering time is proving a bottleneck, first try the @as XML@ and @as JSON@ feature. If you still need improvements, consider using alternative libraries such as Jackson for JSON.
 
 h2. Improve throughput
 
@@ -45,13 +49,15 @@ h3. Disable Hibernate caches
 
 The Hibernate's legacy 2nd-level cache interface (cache provider api) is a source of monitor (thread) blocking. So for high throughput you should disable the 2nd-level cache completely by removing
 
-    hibernate {
-        cache.use_second_level_cache = true
-        cache.use_query_cache = true
-        cache.provider_class = 'net.sf.ehcache.hibernate.EhCacheProvider'
-    }
+{code}
+hibernate {
+    cache.use_second_level_cache = true
+    cache.use_query_cache = true
+    cache.provider_class = 'net.sf.ehcache.hibernate.EhCacheProvider'
+}
+{code}
 
-from `DataSource.groovy`. Unless...you are using Grails 2.x+ with Ehcache. This is because those versions of Grails will automatically use a new Hibernate API that _doesn't_ block. But this only happens with Ehcache.
+from @DataSource.groovy@. Unless...you are using Grails 2.x+ with Ehcache. This is because those versions of Grails will automatically use a new Hibernate API that _doesn't_ block. But this only happens with Ehcache.
 
 The Hibernate query cache is problematic on it's own. For a start, it doesn't work well with tables whose data changes frequently. In fact, queries can be _slower_ if you use the cache in these circumstances. You should only really use the query cache for reference datathat doesn't change often. In addition, there is a [Hibernate issue|https://hibernate.onjira.com/browse/HHH-5927] for versions prior to 4.1.1 that results in threads blocking.
 
@@ -61,17 +67,21 @@ h3. Command objects
 
 Prior to Grails 2, command object binding could prove a significant bottleneck to throughput. If that's the case for your application, then consider changing your action code from something like
 
-    def save = { UserCommand userCommand ->
-        ...
-    }
+{code}
+def save = { UserCommand userCommand ->
+    ...
+}
+{code}
 
 to
 
-    def save = { ->
-        UserCommand userCommand = new UserCommand()
-        bindData(userCommand, params)
-        ...
-    }
+{code}
+def save = { ->
+    UserCommand userCommand = new UserCommand()
+    bindData(userCommand, params)
+    ...
+}
+{code}
 
 Just to clarify again, this is not a problem in Grails 2 and above.
 
@@ -85,29 +95,32 @@ In benchmarking Grails you usually have to first do about 20000 requests and giv
 
 h3. JVM settings
 
-Have you set Permgen size to something reasonable (for example: -XX:PermSize=128M -XX:MaxPermSize=256M)? The `run-app` and `run-war` commands to this automatically, but make sure your production servlet container does the same.
+Have you set Permgen size to something reasonable (for example: -XX:PermSize=128M -XX:MaxPermSize=256M)? The @run-app@ and @run-war@ commands to this automatically, but make sure your production servlet container does the same.
 
 Example settings for Tomcat (in $CATALINA_HOME/bin/setenv.sh):
 
-    CATALINA_OPTS="-server -noverify -Xshare:off -Xms512M -Xmx512M -XX:MaxPermSize=256M -XX:PermSize=128M -XX:+UseParallelGC"
-    CATALINA_OPTS="${CATALINA_OPTS} -Dgrails.env=production"
-    CATALINA_OPTS="${CATALINA_OPTS} -Djava.net.preferIPv4Stack=true -XX:+EliminateLocks -XX:+UseBiasedLocking"
-    # optional setting: MaxJavaStackTraceDepth, it reduces performance overhead of long exception stacktraces by limiting their size to 100 stacktrace elements
-    # You should eliminate all exceptions (even catched) to get good Grails performance
-    # always use some JVM profiler (for example Yourkit YJP) to see if any exceptions are created during normal program flow
-    # Grails and Groovy create some exceptions in initializations but after a few requests, no new exceptions should be created.
-    CATALINA_OPTS="${CATALINA_OPTS} -XX:MaxJavaStackTraceDepth=100"
+{code}
+CATALINA_OPTS="-server -noverify -Xshare:off -Xms512M -Xmx512M -XX:MaxPermSize=256M -XX:PermSize=128M -XX:+UseParallelGC"
+CATALINA_OPTS="${CATALINA_OPTS} -Dgrails.env=production"
+CATALINA_OPTS="${CATALINA_OPTS} -Djava.net.preferIPv4Stack=true -XX:+EliminateLocks -XX:+UseBiasedLocking"
+# optional setting: MaxJavaStackTraceDepth, it reduces performance overhead of long exception stacktraces by limiting their size to 100 stacktrace elements
+# You should eliminate all exceptions (even catched) to get good Grails performance
+# always use some JVM profiler (for example Yourkit YJP) to see if any exceptions are created during normal program flow
+# Grails and Groovy create some exceptions in initializations but after a few requests, no new exceptions should be created.
+CATALINA_OPTS="${CATALINA_OPTS} -XX:MaxJavaStackTraceDepth=100"
+{code}
 
 The JVM version can also have an impact, so be sure your JVM is up to date.
 
 h3. OS
 
 Have you checked if your OS starts swapping? (Monitoring in Linux: "vmstat 1", make sure "swap si / so" are 0 during the benchmark).
-For Linux, use should usually tune swappiness for running a JVM: 
-in /etc/sysctl.conf
+For Linux, use should usually tune swappiness for running a JVM. In /etc/sysctl.conf:
+{code}
 vm.swappiness=5
 (changing temporarily/immediately: "echo 5 | sudo tee /proc/sys/vm/swappiness")
 Checking current value: cat /proc/sys/vm/swappiness
+{code}
 
 vm.swappiness defaults to 60 on many distros and that means that the OS starts swapping after 60% of memory is used. Since the JVM allocates a lot of memory, it will usually cause some swapping if you don't tune swappiness.
 
