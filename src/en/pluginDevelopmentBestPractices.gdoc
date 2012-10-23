@@ -1,0 +1,411 @@
+h1. Grails Plugin Development Best Practices
+
+This is a guide to best practices for developing Grails plugins. (This guide is currently a work in progress, and may be inaccurate!)
+
+h2. Basic Artefacts
+
+h3. Providing Grails Scripts
+Grails plugins can provide scripts that a user can execute from the Grails console. More information on providing scripts can be found in the [Providing Basic Artefacts|http://grails.org/doc/latest/guide/plugins.html#providingBasicArtefacts] section of the Grails user guide.
+
+h4. Provide Usage statements with Grails scripts
+Plugins that provide Grails scripts should always include a usage statement. Users will be able to access this information by using the 'grails help' command. You can provide a usage statement by assigning a String to the 'USAGE' script variable.
+
+{code}
+USAGE = """
+quick-start [--prefix=PREFIX]
+where
+PREFIX = The prefix to add to the names of the realm and
+domain classes.
+"""
+target(default: "Task description ...") {
+...
+}
+{code}
+
+h4. Exiting a Grails script
+If you need to exit a Grails script early, call the exit() method. Do NOT call System.exit() - this will kill Grails interactive mode.
+
+h4. Script Scoping
+It is important that code is contained within your script's target closure. Code outside of a target closure will be executed during build script evaluation.
+
+* Use closure variables if you want to pass arguments
+** But remember: script variables are global scope!
+{code}
+target(doSomething: "Task description ...") {
+    mySharedFunction(argsMap["repo"], 50)
+}
+{code}
+
+
+h3. Promoting Code Re-use
+* Top level scripts for commands
+** Just the default target
+** Includes “internal” script
+* One or more internal scripts
+** Contains the real target implementations
+** No default target
+** Reusable
+* Extract logic into classes
+** Reusable outside build scripts
+
+
+{code}
+includeTargets << new File(myPluginDir, "scripts/_CmdShared.groovy")
+CmdOne.groovy
+CmdTwo.groovy
+_CmdShared.groovy
+=> grails cmd-one
+grails cmd-two
+grails cmd-shared (strikethrough)
+{code}
+
+
+h4. The class loading question
+* How do you use custom classes in scripts?
+* If classes are in ‘src/groovy’ for example:
+Script compile
+Direct import
+=>
+Ooops, class not found!
+Your custom class hasn't been compiled
+and isn't on the classpath!
+
+* Solutions:
+** Put classes in a JAR file
+** Soft load classes and depend on ‘compile’ target
+{code}
+target(customTask: "...") {
+    depends(compile)
+    def myCustomInstance = classLoader.loadClass("org.example.MyUtil").newInstance()
+    myCustomInstance.doSomething()
+}
+{code}
+
+
+h3. Displaying Information to Users
+Grails plugins have a few options for displaying information on a user's terminal.
+
+* println "..." - Persistent information...Hacky
+* event "Status...", ["..."] - Semantic messages
+* StatusUpdate non-persistent in Grails 2.0
+* StatusError persistent and displayed as error in Grails 2.0
+* grailsConsole.log/error/updateStatus() - Only available in Grails 2.0+
+* Full control over output and interactive mode
+
+
+h3. Getting user input
+Grails has provided support for gathering user input from the command line since 1.3, through the use of the CommandLineHelper class.
+
+* new CommandLineHelper().userInput("...")
+** Works on Grails 1.3 as well as Grails 2.0
+** No dependency on Ant
+** Doesn't verify user input (yet)
+** In package org.codehaus.groovy.grails.cli
+{code}
+def inputHelper = new CommandLineHelper()
+username = inputHelper.userInput( "Please enter username for repository:" )
+doCommit = inputHelper.userInput( "Commit code?", ["y", "N"] as String[] )
+{code}
+
+
+h2. Dependencies
+
+h3. Three rules:
+* POMs do not support “build” scope
+* “test” should only be for plugin tests
+* Only “compile” and “runtime” dependencies go into WAR
+* Don’t expose unnecessary dependencies
+– export = false
+– excludes
+– transitive = false
+
+
+h3. Example: Shiro
+{code}
+dependencies {
+    compile 'org.apache.shiro:shiro-core:1.1.0',
+    'org.apache.shiro:shiro-web:1.1.0',
+    'org.apache.shiro:shiro-ehcache:1.1.0',
+    'org.apache.shiro:shiro-quartz:1.1.0',
+    'org.apache.shiro:shiro-spring:1.1.0', {
+        excludes 'ejb', 'jsf-api', 'jms',
+        'connector-api', 'ehcache-core', 'slf4j-api'
+    }
+}
+{code}
+
+
+h3. Example: Spring Security Core
+{code}
+dependencies {
+    compile 'org.springframework.security:spring-security-core:3.0.5.RELEASE', {
+        transitive = false
+    }
+    compile 'org.springframework.security:spring-security-web:3.0.5.RELEASE', {
+        transitive = false
+    }
+}
+plugins {
+    build ':release:1.0.0.RC3', {
+        export = false
+    }
+}
+{code}
+
+
+h3. Dependency DSL vs dependsOn
+* Grails 2.0 ignores dependsOn for dependency resolution!
+** Still used to validate installed plugins
+** Impacts plugin load order
+** Still use by Grails 1.3 and earlier
+** Dependency DSL supported by 1.3.x & 2.x
+** Used by Release plugin to generate POM
+** POM required for Grails 2.0
+** Specify both!
+** Declare most recent supported version of each plugin dependency
+* Version ranges slow down dependency resolution
+** Version ranges are fine for dependsOn
+
+
+h2. Configuration
+
+h3. Should I read from Config or BuildConfig?
+* How can I provide default values?
+* Should I create a DSL?
+* What metadata should I provide?
+
+
+h3. What if I want a setting in both?
+Example: Cloud Foundry plugin might need username & password for deployment and at runtime
+* Write properties to a properties file
+* Merge into config on app startup
+
+
+h3. Copy relevant properties
+bc.
+scripts/_Events.groovy
+{code}
+eventPackageAppEnd = {
+def propsFile = new File(grailsSettings.classesDir, "dummy-plugin.properties")
+propsFile.withWriter("UTF-8") { writer ->
+def config = grailsSettings.config.grails.plugin.cloudfoundry
+def props = config.collectEntries { k, v ->
+["grails.plugin.cloudfoundry.$k", v]
+} as Properties
+props.store writer, "Dummy plugin build properties"
+}
+}
+{code}
+
+
+
+Load properties in plugin descriptor
+DummyGrailsPlugin.groovy
+{code}
+class DummyGrailsPlugin {
+    ...
+    def doWithSpring = {
+        def buildProps = new Properties()
+        def url = getClass().classLoader.getResource("dummy-plugin.properties")
+        url.withReader { reader ->
+            buildProps.load reader
+        }
+        application.config.merge(new ConfigSlurper().parse(buildProps))
+    }
+}
+{code}
+
+
+h3. DSLs vs ConfigSlurper syntax
+* DSLs
+** Give you a rich configuration syntax
+* Example: Log4J configuration
+** Difficult to override individual settings
+** Worth adding “environment” block support
+* ConfigSlurper syntax
+** Limited expressiveness
+** Easy to override individual settings
+** Environment support built in
+* Prefer ConfigSlurper style unless a DSL gives a much better user experience
+
+
+h3. Plugin metadata
+Use the Release Plugin!
+Preferably latest version of plugin & Grails
+(1.0.0.RC3 & 2.0.0.RC1 at this time)
+
+
+h3. Conventions and sensible defaults
+Example: Searchable Plugin
+{code}
+static searchable = true
+static searchable = {
+    root false
+    name name: "tag"
+}
+{code}
+
+
+h3. User configuration overrides
+• Consider:
+Application
+Taggable
+Searchable
+Tag
+How do we configure Tag domain class for search?
+
+User configuration overrides
+bc.
+Config.groovy
+{code}
+searchable {
+    domain {
+        comment = {
+            root false
+            only = ["body"]
+            body name: "comment"
+        }
+        tag = {
+            root false
+            name name: "tag"
+        }
+        screencast = [only: ["title", "description"]]
+    }
+}
+{code}
+
+
+h2. Domain Classes
+
+
+h3. GORM Datasources
+Although the original GORM implementation utilized Hibernate, Grails users now have many GORM based storage solutions at their disposal. When appropriate, Grails plugins should not assume the Hibernate based GORM implementation will be available. This means plugin developers should avoid making use of HQL queries, and Hibernate specific method calls when possible. 
+
+TODO: talk about query options, generic gorm session, etc.
+
+h3. Neighborly domain classes
+* Always use a package
+** e.g. grails.plugin.taggable
+* Implement Serializable if possible
+* Disable auto-import
+** HQL queries must use fully qualified class name!
+{code}
+class Book {
+    ...
+    static mapping = {
+        autoImport false
+    }
+}
+{code}
+
+h3. GORM Sessions
+* Required for standard GORM behavior
+** GORM session kept open for duration of request
+* What about non-request threads?
+** Examples: Thread.start(), JMS listener, etc.
+* Use persistenceInterceptor bean!
+{code}
+persistenceInterceptor?.init()
+try {
+    // Execute user code here
+} finally {
+    persistenceInterceptor?.flush()
+    persistenceInterceptor?.destroy()
+}
+{code}
+
+h3. Providing Domain Classes
+Developers have a few options when providing domain classes as part of a plugin.
+
+h4. Plugin Packaged Domain class
+Domain classes located under a plugin's grails-app/domain directory will be automatically packaged with the plugin.
+* Out-of-the-box experience means reduced configuration for users
+* Unfortunately Grails applications can’t override or remove provided domain classes.
+
+h4. Domain Template - create-*
+* Doesn't pollute app
+* Starting point for user
+* Upgrades can be painful
+
+
+h4. The third way
+* Core Plugin
+* Quick Start Plugin
+* Domain
+
+
+h2. User Interface
+TODO: talk about resources plugin
+
+
+h3. The simple stuff
+* Provide Resources definitions
+* Add default codec to GSPs
+** <%@page defaultCodec="none" %>
+* Encode output from custom tags
+** Write unit tests to verify!
+* Validate your tag attributes
+** Fail early and use throwTagError()
+{code}
+if (!attrs.containsKey(name)) {
+    throwTagError "Tag [$tag] is missing required " + "attribute [$name]"
+}
+{code}
+
+
+
+Use packages for your TagLibs (and a custom namespace).
+{code}
+static namespace = "jsec"
+{code}
+
+* Add Javadoc tags for attributes (helps IDEs)
+* @attr roles REQUIRED The role name(s)
+* @attr url The URL to check
+
+
+h3. Complete UIs
+* Which Javascript library should you use?
+* Styling?
+* What other plugins can/should you depend on?
+* Out of the box experience vs Control over look & feel
+
+
+
+h3. Complete UIs
+* Provide UI as separate plugin
+** Use Resources plugin!
+* Don’t embed Javascript libraries
+** Depend on the corresponding plugins
+** jQuery, YUI, etc.
+* Don’t use “main” layout
+** Can’t be overridden
+** Don’t specify a layout (applied by convention)...
+** ...or specify a unique name (app can provide its own layout)
+* Don’t provide <name>UrlMappings.groovy
+** No way to override those mappings
+** Rely on convention mapping & document sample mappings
+
+
+h3. Other discussion points
+* In-place plugins vs installed ones
+* Overriding GSPs
+** views, partial templates, and layouts
+* Transactional services or not?
+* The web descriptor
+** doWithWebDescriptor
+
+
+h3. Summary
+* Plugins are easy to develop
+* Making them work with other plugins is harder
+* These guidelines will help
+* Conventions and guidelines don’t have to be provided by core...
+
+
+h3. Grails Plugin Platform
+* Config defaults & merging
+* Theme API for UIs
+* Conventions & overrides
+* https://github.com/Grailsrocks/grails-plugin-platform
+
