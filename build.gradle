@@ -19,7 +19,7 @@ tasks.addRule("Pattern: publish_<lang>") { String taskName ->
 
 def langDirs = new File(projectDir, "src").listFiles({ f -> f.directory} as FileFilter)
 
-task docs(type: Copy, dependsOn: langDirs.collect { "publish_${it.name}" }) {
+task docs(type: Copy, dependsOn: langDirs.collect { project.tasks["publish_${it.name}"] }) {
     from file("resources/index.html")
     into outputDir
 }
