@@ -10,7 +10,7 @@ This HOWTO is for plugin developers who would like to know the steps necessary t
 
 h2. First Steps
 
-In order to publish to the new repository you need to send an email to the [Grails developer list|http://grails.org/Mailing+lists] containing your Grails.org username and the plugins you wish to publish. 
+In order to publish to the new repository you need to first submit your plugin for approval through the [plugin portal|http://grails.org/plugins/submitPlugin]. Once you have been notified of the approval, you are ready to publish.
 
 h2. Moving your code to another hosting provider
 
