@@ -95,7 +95,7 @@ In benchmarking Grails you usually have to first do about 20000 requests and giv
 
 h3. JVM settings
 
-Have you set Permgen size to something reasonable (for example: -XX:PermSize=128M -XX:MaxPermSize=256M)? The @run-app@ and @run-war@ commands to this automatically, but make sure your production servlet container does the same.
+Have you set Permgen size to something reasonable (for example: -XX:PermSize=128M -XX:MaxPermSize=256M)? The @run-app@ and @run-war@ commands do this automatically, but make sure your production servlet container does the same.
 
 Example settings for Tomcat (in $CATALINA_HOME/bin/setenv.sh):
 
