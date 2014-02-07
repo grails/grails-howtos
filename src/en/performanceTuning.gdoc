@@ -122,6 +122,6 @@ vm.swappiness=5
 Checking current value: cat /proc/sys/vm/swappiness
 {code}
 
-vm.swappiness defaults to 60 on many distros and that means that the OS starts swapping after 60% of memory is used. Since the JVM allocates a lot of memory, it will usually cause some swapping if you don't tune swappiness.
+vm.swappiness defaults to 60 on many distros, and that might be too aggressive. Since the JVM allocates a lot of memory, it will usually cause some swapping if you don't tune swappiness.
 
 You might also have to tune the Linux OS TCP/IP settings if "netstat -an" still shows a lot of hanging connections after adding the id-parameter to grails-rest calls.
